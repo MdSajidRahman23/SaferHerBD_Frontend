@@ -1,0 +1,1271 @@
+# 📁 PROJECT EXPORT FOR LLMs
+
+## 📊 Project Information
+
+- **Project Name**: `safeher_flutter`
+- **Generated On**: 2026-05-05 05:06:17 (Asia/Dhaka / GMT+06:00)
+- **Total Files Processed**: 28
+- **Export Tool**: Easy Whole Project to Single Text File for LLMs v1.1.0
+- **Tool Author**: Jota / José Guilherme Pandolfi
+
+### ⚙️ Export Configuration
+
+| Setting | Value |
+|---------|-------|
+| Language | `en` |
+| Max File Size | `1 MB` |
+| Include Hidden Files | `false` |
+| Output Format | `both` |
+
+## 🌳 Project Structure
+
+```
+├── 📁 assets/
+├── 📁 lib/
+│   ├── 📁 {screens,widgets,services,models,utils}/
+│   ├── 📁 screens/
+│   │   ├── 📁 auth/
+│   │   │   ├── 📄 login_screen.dart (5.14 KB)
+│   │   │   └── 📄 register_screen.dart (3.94 KB)
+│   │   ├── 📁 chatbot/
+│   │   │   └── 📄 chatbot_screen.dart (11.03 KB)
+│   │   ├── 📁 dashboard/
+│   │   │   └── 📄 dashboard_screen.dart (13.77 KB)
+│   │   ├── 📁 forum/
+│   │   │   └── 📄 forum_screen.dart (10.56 KB)
+│   │   ├── 📁 home/
+│   │   │   └── 📄 main_shell.dart (2.21 KB)
+│   │   ├── 📁 route/
+│   │   │   └── 📄 route_screen.dart (12.36 KB)
+│   │   ├── 📁 sos/
+│   │   │   └── 📄 sos_screen.dart (14.94 KB)
+│   │   └── 📄 splash_screen.dart (3.57 KB)
+│   ├── 📁 services/
+│   │   ├── 📄 api_service.dart (4.07 KB)
+│   │   ├── 📄 auth_service.dart (3.44 KB)
+│   │   └── 📄 sos_service.dart (7.6 KB)
+│   ├── 📁 utils/
+│   │   ├── 📄 app_theme.dart (3.43 KB)
+│   │   └── 📄 constants.dart (3.69 KB)
+│   └── 📄 main.dart (1.49 KB)
+├── 📁 test/
+│   └── 📄 widget_test.dart (1.07 KB)
+├── 📁 web/
+│   ├── 📁 icons/
+│   │   ├── 📄 Icon-192.png (5.17 KB)
+│   │   ├── 📄 Icon-512.png (8.06 KB)
+│   │   ├── 📄 Icon-maskable-192.png (5.46 KB)
+│   │   └── 📄 Icon-maskable-512.png (20.51 KB)
+│   ├── 📄 favicon.png (917 B)
+│   ├── 📄 index.html (1.55 KB)
+│   └── 📄 manifest.json (967 B)
+├── 📄 analysis_options.yaml (1.41 KB)
+├── 📄 pubspec.lock (21.98 KB)
+├── 📄 pubspec.yaml (764 B)
+├── 📄 README.md (657 B)
+└── 📄 safeher_bangladesh.iml (859 B)
+```
+
+## 📑 Table of Contents
+
+**Project Files:**
+
+- [📄 web/index.html](#📄-web-index-html)
+- [📄 web/manifest.json](#📄-web-manifest-json)
+- [📄 analysis_options.yaml](#📄-analysis-options-yaml)
+- [📄 pubspec.lock](#📄-pubspec-lock)
+- [📄 pubspec.yaml](#📄-pubspec-yaml)
+- [📄 README.md](#📄-readme-md)
+
+---
+
+## 📈 Project Statistics
+
+| Metric | Count |
+|--------|-------|
+| Total Files | 28 |
+| Total Directories | 16 |
+| Text Files | 6 |
+| Binary Files | 22 |
+| Total Size | 170.52 KB |
+
+### 📄 File Types Distribution
+
+| Extension | Count |
+|-----------|-------|
+| `.dart` | 16 |
+| `.png` | 5 |
+| `.yaml` | 2 |
+| `.html` | 1 |
+| `.json` | 1 |
+| `.lock` | 1 |
+| `.md` | 1 |
+| `.iml` | 1 |
+
+## 💻 File Code Contents
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/auth/login_screen.dart`
+- `lib/screens/auth/register_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/chatbot/chatbot_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/dashboard/dashboard_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/forum/forum_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/home/main_shell.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/route/route_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/sos/sos_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/screens/splash_screen.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/services/api_service.dart`
+- `lib/services/auth_service.dart`
+- `lib/services/sos_service.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/utils/app_theme.dart`
+- `lib/utils/constants.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `lib/main.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `test/widget_test.dart`
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `web/icons/Icon-192.png`
+- `web/icons/Icon-512.png`
+- `web/icons/Icon-maskable-192.png`
+- `web/icons/Icon-maskable-512.png`
+
+### <a id="📄-web-index-html"></a>📄 `web/index.html`
+
+**File Info:**
+- **Size**: 1.55 KB
+- **Extension**: `.html`
+- **Language**: `html`
+- **Location**: `web/index.html`
+- **Relative Path**: `web`
+- **Created**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **Modified**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **MD5**: `aa8c3ac0ea2cf1a44a36069fa9530730`
+- **SHA256**: `d276b30796e4d54ba9fa31666055e9652dbce3f7e6ffada78dff548e9f6a8c26`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="safeher_bangladesh">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>safeher_bangladesh</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
+
+```
+
+---
+
+### <a id="📄-web-manifest-json"></a>📄 `web/manifest.json`
+
+**File Info:**
+- **Size**: 967 B
+- **Extension**: `.json`
+- **Language**: `json`
+- **Location**: `web/manifest.json`
+- **Relative Path**: `web`
+- **Created**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **Modified**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **MD5**: `be2a94c50030b4c91fe1afc1c2228e70`
+- **SHA256**: `4b24af8c9ef4c80767dc97513b67588419857e90ef1ec41d68fce085c3c421bf`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```json
+{
+    "name": "safeher_bangladesh",
+    "short_name": "safeher_bangladesh",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
+
+```
+
+---
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `web/favicon.png`
+
+### <a id="📄-analysis-options-yaml"></a>📄 `analysis_options.yaml`
+
+**File Info:**
+- **Size**: 1.41 KB
+- **Extension**: `.yaml`
+- **Language**: `yaml`
+- **Location**: `analysis_options.yaml`
+- **Relative Path**: `root`
+- **Created**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **Modified**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **MD5**: `9e65f4b9beebb674c0dc252f70a5c177`
+- **SHA256**: `b63207cf529949ec4727b68c23dbb38ce255b6f6f4ae1effcb5c1dcf2852d238`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```yaml
+# This file configures the analyzer, which statically analyzes Dart code to
+# check for errors, warnings, and lints.
+#
+# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
+# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
+# invoked from the command line by running `flutter analyze`.
+
+# The following line activates a set of recommended lints for Flutter apps,
+# packages, and plugins designed to encourage good coding practices.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  # The lint rules applied to this project can be customized in the
+  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
+  # included above or to enable additional rules. A list of all available lints
+  # and their documentation is published at https://dart.dev/lints.
+  #
+  # Instead of disabling a lint rule for the entire project in the
+  # section below, it can also be suppressed for a single line of code
+  # or a specific dart file by using the `// ignore: name_of_lint` and
+  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
+  # producing the lint.
+  rules:
+    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
+    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
+
+```
+
+---
+
+### <a id="📄-pubspec-lock"></a>📄 `pubspec.lock`
+
+**File Info:**
+- **Size**: 21.98 KB
+- **Extension**: `.lock`
+- **Language**: `text`
+- **Location**: `pubspec.lock`
+- **Relative Path**: `root`
+- **Created**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **Modified**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **MD5**: `3d50225fd324b9da322c2bdbc28ae7f3`
+- **SHA256**: `06fb690c8aaa89883dd3a3ecc92c54a8198c420bbe3074b47d213179a6e61759`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```text
+# Generated by pub
+# See https://dart.dev/tools/pub/glossary#lockfile
+packages:
+  _flutterfire_internals:
+    dependency: transitive
+    description:
+      name: _flutterfire_internals
+      sha256: ff0a84a2734d9e1089f8aedd5c0af0061b82fb94e95260d943404e0ef2134b11
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.59"
+  args:
+    dependency: transitive
+    description:
+      name: args
+      sha256: d0481093c50b1da8910eb0bb301626d4d8eb7284aa739614d2b394ee09e3ea04
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.7.0"
+  async:
+    dependency: transitive
+    description:
+      name: async
+      sha256: e2eb0491ba5ddb6177742d2da23904574082139b07c1e33b8503b9f46f3e1a37
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.13.1"
+  boolean_selector:
+    dependency: transitive
+    description:
+      name: boolean_selector
+      sha256: "8aab1771e1243a5063b8b0ff68042d67334e3feab9e95b9490f9a6ebf73b42ea"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
+  characters:
+    dependency: transitive
+    description:
+      name: characters
+      sha256: faf38497bda5ead2a8c7615f4f7939df04333478bf32e4173fcb06d428b5716b
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.1"
+  clock:
+    dependency: transitive
+    description:
+      name: clock
+      sha256: fddb70d9b5277016c77a80201021d40a2247104d9f4aa7bab7157b7e3f05b84b
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.2"
+  code_assets:
+    dependency: transitive
+    description:
+      name: code_assets
+      sha256: "83ccdaa064c980b5596c35dd64a8d3ecc68620174ab9b90b6343b753aa721687"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
+  collection:
+    dependency: transitive
+    description:
+      name: collection
+      sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.19.1"
+  connectivity_plus:
+    dependency: "direct main"
+    description:
+      name: connectivity_plus
+      sha256: b5e72753cf63becce2c61fd04dfe0f1c430cc5278b53a1342dc5ad839eab29ec
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.5"
+  connectivity_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: connectivity_plus_platform_interface
+      sha256: "3c09627c536d22fd24691a905cdd8b14520de69da52c7a97499c8be5284a32ed"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+  crypto:
+    dependency: transitive
+    description:
+      name: crypto
+      sha256: c8ea0233063ba03258fbcf2ca4d6dadfefe14f02fab57702265467a19f27fadf
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.7"
+  dbus:
+    dependency: transitive
+    description:
+      name: dbus
+      sha256: d0c98dcd4f5169878b6cf8f6e0a52403a9dff371a3e2f019697accbf6f44a270
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.12"
+  dio:
+    dependency: "direct main"
+    description:
+      name: dio
+      sha256: aff32c08f92787a557dd5c0145ac91536481831a01b4648136373cddb0e64f8c
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.9.2"
+  dio_web_adapter:
+    dependency: transitive
+    description:
+      name: dio_web_adapter
+      sha256: "2f9e64323a7c3c7ef69567d5c800424a11f8337b8b228bad02524c9fb3c1f340"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
+  fake_async:
+    dependency: transitive
+    description:
+      name: fake_async
+      sha256: "5368f224a74523e8d2e7399ea1638b37aecfca824a3cc4dfdf77bf1fa905ac44"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.3"
+  ffi:
+    dependency: transitive
+    description:
+      name: ffi
+      sha256: "6d7fd89431262d8f3125e81b50d3847a091d846eafcd4fdb88dd06f36d705a45"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
+  file:
+    dependency: transitive
+    description:
+      name: file
+      sha256: a3b4f84adafef897088c160faf7dfffb7696046cb13ae90b508c2cbc95d3b8d4
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.1"
+  firebase_core:
+    dependency: "direct main"
+    description:
+      name: firebase_core
+      sha256: "7be63a3f841fc9663342f7f3a011a42aef6a61066943c90b1c434d79d5c995c5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.15.2"
+  firebase_core_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_core_platform_interface
+      sha256: "0ecda14c1bfc9ed8cac303dd0f8d04a320811b479362a9a4efb14fd331a473ce"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.3"
+  firebase_core_web:
+    dependency: transitive
+    description:
+      name: firebase_core_web
+      sha256: "0ed0dc292e8f9ac50992e2394e9d336a0275b6ae400d64163fdf0a8a8b556c37"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.24.1"
+  firebase_messaging:
+    dependency: "direct main"
+    description:
+      name: firebase_messaging
+      sha256: "60be38574f8b5658e2f22b7e311ff2064bea835c248424a383783464e8e02fcc"
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.2.10"
+  firebase_messaging_platform_interface:
+    dependency: transitive
+    description:
+      name: firebase_messaging_platform_interface
+      sha256: "685e1771b3d1f9c8502771ccc9f91485b376ffe16d553533f335b9183ea99754"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.6.10"
+  firebase_messaging_web:
+    dependency: transitive
+    description:
+      name: firebase_messaging_web
+      sha256: "0d1be17bc89ed3ff5001789c92df678b2e963a51b6fa2bdb467532cc9dbed390"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.10.10"
+  fixnum:
+    dependency: transitive
+    description:
+      name: fixnum
+      sha256: b6dc7065e46c974bc7c5f143080a6764ec7a4be6da1285ececdc37be96de53be
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
+  flutter:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  flutter_lints:
+    dependency: "direct dev"
+    description:
+      name: flutter_lints
+      sha256: "3f41d009ba7172d5ff9be5f6e6e6abb4300e263aab8866d2a0842ed2a70f8f0c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
+  flutter_svg:
+    dependency: "direct main"
+    description:
+      name: flutter_svg
+      sha256: "1ded017b39c8e15c8948ea855070a5ff8ff8b3d5e83f3446e02d6bb12add7ad9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.4"
+  flutter_test:
+    dependency: "direct dev"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  flutter_web_plugins:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  geolocator:
+    dependency: "direct main"
+    description:
+      name: geolocator
+      sha256: "149876cc5207a0f5daf4fdd3bfcf0a0f27258b3fe95108fa084f527ad0568f1b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "12.0.0"
+  geolocator_android:
+    dependency: transitive
+    description:
+      name: geolocator_android
+      sha256: fcb1760a50d7500deca37c9a666785c047139b5f9ee15aa5469fae7dbbe3170d
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.6.2"
+  geolocator_apple:
+    dependency: transitive
+    description:
+      name: geolocator_apple
+      sha256: dbdd8789d5aaf14cf69f74d4925ad1336b4433a6efdf2fce91e8955dc921bf22
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.13"
+  geolocator_platform_interface:
+    dependency: transitive
+    description:
+      name: geolocator_platform_interface
+      sha256: "30cb64f0b9adcc0fb36f628b4ebf4f731a2961a0ebd849f4b56200205056fe67"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.2.6"
+  geolocator_web:
+    dependency: transitive
+    description:
+      name: geolocator_web
+      sha256: b1ae9bdfd90f861fde8fd4f209c37b953d65e92823cb73c7dee1fa021b06f172
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.3"
+  geolocator_windows:
+    dependency: transitive
+    description:
+      name: geolocator_windows
+      sha256: "175435404d20278ffd220de83c2ca293b73db95eafbdc8131fe8609be1421eb6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.5"
+  glob:
+    dependency: transitive
+    description:
+      name: glob
+      sha256: c3f1ee72c96f8f78935e18aa8cecced9ab132419e8625dc187e1c2408efc20de
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.3"
+  google_fonts:
+    dependency: "direct main"
+    description:
+      name: google_fonts
+      sha256: ba03d03bcaa2f6cb7bd920e3b5027181db75ab524f8891c8bc3aa603885b8055
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.3.3"
+  hooks:
+    dependency: transitive
+    description:
+      name: hooks
+      sha256: "025f060e86d2d4c3c47b56e33caf7f93bf9283340f26d23424ebcfccf34f621e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
+  http:
+    dependency: "direct main"
+    description:
+      name: http
+      sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.6.0"
+  http_parser:
+    dependency: transitive
+    description:
+      name: http_parser
+      sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.1.2"
+  jni:
+    dependency: transitive
+    description:
+      name: jni
+      sha256: c2230682d5bc2362c1c9e8d3c7f406d9cbba23ab3f2e203a025dd47e0fb2e68f
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
+  jni_flutter:
+    dependency: transitive
+    description:
+      name: jni_flutter
+      sha256: "8b59e590786050b1cd866677dddaf76b1ade5e7bc751abe04b86e84d379d3ba6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  leak_tracker:
+    dependency: transitive
+    description:
+      name: leak_tracker
+      sha256: "33e2e26bdd85a0112ec15400c8cbffea70d0f9c3407491f672a2fad47915e2de"
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.0.2"
+  leak_tracker_flutter_testing:
+    dependency: transitive
+    description:
+      name: leak_tracker_flutter_testing
+      sha256: "1dbc140bb5a23c75ea9c4811222756104fbcd1a27173f0c34ca01e16bea473c1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.10"
+  leak_tracker_testing:
+    dependency: transitive
+    description:
+      name: leak_tracker_testing
+      sha256: "8d5a2d49f4a66b49744b23b018848400d23e54caf9463f4eb20df3eb8acb2eb1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
+  lints:
+    dependency: transitive
+    description:
+      name: lints
+      sha256: "976c774dd944a42e83e2467f4cc670daef7eed6295b10b36ae8c85bcbf828235"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
+  logging:
+    dependency: transitive
+    description:
+      name: logging
+      sha256: c8245ada5f1717ed44271ed1c26b8ce85ca3228fd2ffdb75468ab01979309d61
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.0"
+  matcher:
+    dependency: transitive
+    description:
+      name: matcher
+      sha256: dc0b7dc7651697ea4ff3e69ef44b0407ea32c487a39fff6a4004fa585e901861
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.19"
+  material_color_utilities:
+    dependency: transitive
+    description:
+      name: material_color_utilities
+      sha256: "9c337007e82b1889149c82ed242ed1cb24a66044e30979c44912381e9be4c48b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.13.0"
+  meta:
+    dependency: transitive
+    description:
+      name: meta
+      sha256: "23f08335362185a5ea2ad3a4e597f1375e78bce8a040df5c600c8d3552ef2394"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.17.0"
+  mime:
+    dependency: transitive
+    description:
+      name: mime
+      sha256: "41a20518f0cb1256669420fdba0cd90d21561e560ac240f26ef8322e45bb7ed6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
+  native_toolchain_c:
+    dependency: transitive
+    description:
+      name: native_toolchain_c
+      sha256: "6ba77bb18063eebe9de401f5e6437e95e1438af0a87a3a39084fbd37c90df572"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.17.6"
+  nested:
+    dependency: transitive
+    description:
+      name: nested
+      sha256: "03bac4c528c64c95c722ec99280375a6f2fc708eec17c7b3f07253b626cd2a20"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
+  nm:
+    dependency: transitive
+    description:
+      name: nm
+      sha256: "2c9aae4127bdc8993206464fcc063611e0e36e72018696cd9631023a31b24254"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
+  objective_c:
+    dependency: transitive
+    description:
+      name: objective_c
+      sha256: "100a1c87616ab6ed41ec263b083c0ef3261ee6cd1dc3b0f35f8ddfa4f996fe52"
+      url: "https://pub.dev"
+    source: hosted
+    version: "9.3.0"
+  package_config:
+    dependency: transitive
+    description:
+      name: package_config
+      sha256: f096c55ebb7deb7e384101542bfba8c52696c1b56fca2eb62827989ef2353bbc
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
+  path:
+    dependency: "direct main"
+    description:
+      name: path
+      sha256: "75cca69d1490965be98c73ceaea117e8a04dd21217b37b292c9ddbec0d955bc5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.9.1"
+  path_parsing:
+    dependency: transitive
+    description:
+      name: path_parsing
+      sha256: "883402936929eac138ee0a45da5b0f2c80f89913e6dc3bf77eb65b84b409c6ca"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  path_provider:
+    dependency: transitive
+    description:
+      name: path_provider
+      sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.5"
+  path_provider_android:
+    dependency: transitive
+    description:
+      name: path_provider_android
+      sha256: "69cbd515a62b94d32a7944f086b2f82b4ac40a1d45bebfc00813a430ab2dabcd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.1"
+  path_provider_foundation:
+    dependency: transitive
+    description:
+      name: path_provider_foundation
+      sha256: "2a376b7d6392d80cd3705782d2caa734ca4727776db0b6ec36ef3f1855197699"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.6.0"
+  path_provider_linux:
+    dependency: transitive
+    description:
+      name: path_provider_linux
+      sha256: f7a1fe3a634fe7734c8d3f2766ad746ae2a2884abe22e241a8b301bf5cac3279
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.1"
+  path_provider_platform_interface:
+    dependency: transitive
+    description:
+      name: path_provider_platform_interface
+      sha256: "88f5779f72ba699763fa3a3b06aa4bf6de76c8e5de842cf6f29e2e06476c2334"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
+  path_provider_windows:
+    dependency: transitive
+    description:
+      name: path_provider_windows
+      sha256: bd6f00dbd873bfb70d0761682da2b3a2c2fccc2b9e84c495821639601d81afe7
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.3.0"
+  petitparser:
+    dependency: transitive
+    description:
+      name: petitparser
+      sha256: "91bd59303e9f769f108f8df05e371341b15d59e995e6806aefab827b58336675"
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.2"
+  platform:
+    dependency: transitive
+    description:
+      name: platform
+      sha256: "5d6b1b0036a5f331ebc77c850ebc8506cbc1e9416c27e59b439f917a902a4984"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.6"
+  plugin_platform_interface:
+    dependency: transitive
+    description:
+      name: plugin_platform_interface
+      sha256: "4820fbfdb9478b1ebae27888254d445073732dae3d6ea81f0b7e06d5dedc3f02"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.8"
+  provider:
+    dependency: "direct main"
+    description:
+      name: provider
+      sha256: "4e82183fa20e5ca25703ead7e05de9e4cceed1fbd1eadc1ac3cb6f565a09f272"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.5+1"
+  pub_semver:
+    dependency: transitive
+    description:
+      name: pub_semver
+      sha256: "5bfcf68ca79ef689f8990d1160781b4bad40a3bd5e5218ad4076ddb7f4081585"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
+  record_use:
+    dependency: transitive
+    description:
+      name: record_use
+      sha256: "2551bd8eecfe95d14ae75f6021ad0248be5c27f138c2ec12fcb52b500b3ba1ed"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.6.0"
+  shared_preferences:
+    dependency: "direct main"
+    description:
+      name: shared_preferences
+      sha256: c3025c5534b01739267eb7d76959bbc25a6d10f6988e1c2a3036940133dd10bf
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.5"
+  shared_preferences_android:
+    dependency: transitive
+    description:
+      name: shared_preferences_android
+      sha256: e8d4762b1e2e8578fc4d0fd548cebf24afd24f49719c08974df92834565e2c53
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.23"
+  shared_preferences_foundation:
+    dependency: transitive
+    description:
+      name: shared_preferences_foundation
+      sha256: "4e7eaffc2b17ba398759f1151415869a34771ba11ebbccd1b0145472a619a64f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.5.6"
+  shared_preferences_linux:
+    dependency: transitive
+    description:
+      name: shared_preferences_linux
+      sha256: "580abfd40f415611503cae30adf626e6656dfb2f0cee8f465ece7b6defb40f2f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+  shared_preferences_platform_interface:
+    dependency: transitive
+    description:
+      name: shared_preferences_platform_interface
+      sha256: "649dc798a33931919ea356c4305c2d1f81619ea6e92244070b520187b5140ef9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.2"
+  shared_preferences_web:
+    dependency: transitive
+    description:
+      name: shared_preferences_web
+      sha256: c49bd060261c9a3f0ff445892695d6212ff603ef3115edbb448509d407600019
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.3"
+  shared_preferences_windows:
+    dependency: transitive
+    description:
+      name: shared_preferences_windows
+      sha256: "94ef0f72b2d71bc3e700e025db3710911bd51a71cefb65cc609dd0d9a982e3c1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.1"
+  shimmer:
+    dependency: "direct main"
+    description:
+      name: shimmer
+      sha256: "5f88c883a22e9f9f299e5ba0e4f7e6054857224976a5d9f839d4ebdc94a14ac9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
+  sky_engine:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  source_span:
+    dependency: transitive
+    description:
+      name: source_span
+      sha256: "56a02f1f4cd1a2d96303c0144c93bd6d909eea6bee6bf5a0e0b685edbd4c47ab"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.10.2"
+  stack_trace:
+    dependency: transitive
+    description:
+      name: stack_trace
+      sha256: "8b27215b45d22309b5cddda1aa2b19bdfec9df0e765f2de506401c071d38d1b1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.12.1"
+  stream_channel:
+    dependency: transitive
+    description:
+      name: stream_channel
+      sha256: "969e04c80b8bcdf826f8f16579c7b14d780458bd97f56d107d3950fdbeef059d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.4"
+  string_scanner:
+    dependency: transitive
+    description:
+      name: string_scanner
+      sha256: "921cd31725b72fe181906c6a94d987c78e3b98c2e205b397ea399d4054872b43"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.1"
+  term_glyph:
+    dependency: transitive
+    description:
+      name: term_glyph
+      sha256: "7f554798625ea768a7518313e58f83891c7f5024f88e46e7182a4558850a4b8e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.2"
+  test_api:
+    dependency: transitive
+    description:
+      name: test_api
+      sha256: "8161c84903fd860b26bfdefb7963b3f0b68fee7adea0f59ef805ecca346f0c7a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.7.10"
+  typed_data:
+    dependency: transitive
+    description:
+      name: typed_data
+      sha256: f9049c039ebfeb4cf7a7104a675823cd72dba8297f264b6637062516699fa006
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
+  uuid:
+    dependency: "direct main"
+    description:
+      name: uuid
+      sha256: "1fef9e8e11e2991bb773070d4656b7bd5d850967a2456cfc83cf47925ba79489"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.5.3"
+  vector_graphics:
+    dependency: transitive
+    description:
+      name: vector_graphics
+      sha256: "6409a25046024f0f8c5d8a59fec314081e81f9d436b66ca4015a8b49772bf445"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
+  vector_graphics_codec:
+    dependency: transitive
+    description:
+      name: vector_graphics_codec
+      sha256: "99fd9fbd34d9f9a32efd7b6a6aae14125d8237b10403b422a6a6dfeac2806146"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.13"
+  vector_graphics_compiler:
+    dependency: transitive
+    description:
+      name: vector_graphics_compiler
+      sha256: "5a88dd14c0954a5398af544651c7fb51b457a2a556949bfb25369b210ef73a74"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.0"
+  vector_math:
+    dependency: transitive
+    description:
+      name: vector_math
+      sha256: d530bd74fea330e6e364cda7a85019c434070188383e1cd8d9777ee586914c5b
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
+  vm_service:
+    dependency: transitive
+    description:
+      name: vm_service
+      sha256: "0016aef94fc66495ac78af5859181e3f3bf2026bd8eecc72b9565601e19ab360"
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.2.0"
+  web:
+    dependency: transitive
+    description:
+      name: web
+      sha256: "868d88a33d8a87b18ffc05f9f030ba328ffefba92d6c127917a2ba740f9cfe4a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
+  xdg_directories:
+    dependency: transitive
+    description:
+      name: xdg_directories
+      sha256: "7a3f37b05d989967cdddcbb571f1ea834867ae2faa29725fd085180e0883aa15"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.0"
+  xml:
+    dependency: transitive
+    description:
+      name: xml
+      sha256: "971043b3a0d3da28727e40ed3e0b5d18b742fa5a68665cca88e74b7876d5e025"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.6.1"
+  yaml:
+    dependency: transitive
+    description:
+      name: yaml
+      sha256: b9da305ac7c39faa3f030eccd175340f968459dae4af175130b3fc47e40d76ce
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.3"
+sdks:
+  dart: ">=3.10.3 <4.0.0"
+  flutter: ">=3.38.4"
+
+```
+
+---
+
+### <a id="📄-pubspec-yaml"></a>📄 `pubspec.yaml`
+
+**File Info:**
+- **Size**: 764 B
+- **Extension**: `.yaml`
+- **Language**: `yaml`
+- **Location**: `pubspec.yaml`
+- **Relative Path**: `root`
+- **Created**: 2026-05-04 13:53:02 (Asia/Dhaka / GMT+06:00)
+- **Modified**: 2026-05-04 19:54:35 (Asia/Dhaka / GMT+06:00)
+- **MD5**: `0a1870e8c455461e234a53de19bf9a70`
+- **SHA256**: `70467900dea5e754619ab303d131c5b348b7ab8cc4c14937164b579c95ec582a`
+- **Encoding**: ASCII
+
+**File code content:**
+
+```yaml
+name: safeher_bangladesh
+description: SafeHer Bangladesh - AI-Driven Platform for Women Safety
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP & API
+  http: ^1.2.0
+  dio: ^5.4.3+1
+
+  # State Management
+  provider: ^6.1.2
+
+  # Local Storage (offline SOS queue - web compatible)
+  shared_preferences: ^2.2.3
+  path: ^1.9.0
+
+  # Location
+  geolocator: ^12.0.0
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+
+  # UI
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  shimmer: ^3.0.0
+
+  # Connectivity
+  connectivity_plus: ^6.0.5
+
+  # UUID
+  uuid: ^4.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+```
+
+---
+
+### <a id="📄-readme-md"></a>📄 `README.md`
+
+**File Info:**
+- **Size**: 657 B
+- **Extension**: `.md`
+- **Language**: `text`
+- **Location**: `README.md`
+- **Relative Path**: `root`
+- **Created**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **Modified**: 2026-05-04 19:55:40 (Asia/Dhaka / GMT+06:00)
+- **MD5**: `d41552b087d5e5eb015ef75321793465`
+- **SHA256**: `8a477eb230e10f09c8e27ebc30be29b37d0040da9c1f5523df8c9d7d37906c33`
+- **Encoding**: ASCII
+
+**File code content:**
+
+````markdown
+# safeher_bangladesh
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
+
+````
+
+---
+
+## 🚫 Binary/Excluded Files
+
+The following files were not included in the text content:
+
+- `safeher_bangladesh.iml`
+
