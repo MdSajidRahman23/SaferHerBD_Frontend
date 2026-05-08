@@ -106,12 +106,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: () async {
               if (nameCtrl.text.isEmpty || phoneCtrl.text.isEmpty) return;
               Navigator.pop(context);
-              final ok = await _api.addContact(
+              final res = await _api.addContact(
                 name: nameCtrl.text.trim(),
                 phone: phoneCtrl.text.trim(),
                 relation: relCtrl.text.trim().isEmpty ? 'Contact' : relCtrl.text.trim(),
                 priority: priority,
               );
+              final code = res['statusCode'] as int? ?? 0;
+              final ok = code == 200 || code == 201;
               if (ok) _load();
               if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(ok ? 'যোগাযোগ যোগ হয়েছে ✓' : 'সমস্যা হয়েছে',

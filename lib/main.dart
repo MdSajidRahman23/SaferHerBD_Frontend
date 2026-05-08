@@ -8,12 +8,11 @@ import 'screens/home/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp, DeviceOrientation.portraitDown,
-  ]);
+  await SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
   ));
   runApp(const SafeHerApp());
 }
@@ -23,7 +22,7 @@ class SafeHerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SafeHerBD — গণপ্রজাতন্ত্রী বাংলাদেশ সরকার',
+      title: 'SafeHer Bangladesh',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialRoute: '/',

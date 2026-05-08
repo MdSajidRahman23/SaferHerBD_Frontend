@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,16 +8,9 @@ import 'package:uuid/uuid.dart';
 import '../utils/constants.dart';
 import 'auth_service.dart';
 
-// ─────────────────────────────────────────────────────────────────
-//  SOS SERVICE  — "Store offline & retry" mechanism (NFR-1)
-//
-//  Web:     uses SharedPreferences (localStorage) as offline store
-//  Android: uses SharedPreferences as well (sqflite removed for web compat)
-// ─────────────────────────────────────────────────────────────────
-
 class SosResult {
-  final bool   success;
-  final bool   wasOffline;
+  final bool success;
+  final bool wasOffline;
   final String message;
   final String messageBn;
   final double? latencyMs;
@@ -41,50 +33,72 @@ class SosService {
   final _uuid = const Uuid();
   StreamSubscription? _connectivitySub;
 
-  // ── MAIN TRIGGER ──────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────
+  //  MAIN TRIGGER
+  // ────────────────────────────────────────────────────────────────
   Future<SosResult> trigger({String method = 'button'}) async {
     final triggeredAt = DateTime.now();
     final id = _uuid.v4();
 
-    // Get GPS (skip on web if permission denied)
+    // Get GPS — graceful fallback to default Dhaka coords
     double lat = 23.8103, lng = 90.4125;
     try {
-      if (!kIsWeb) {
-        final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-        ).timeout(const Duration(seconds: 5));
-        lat = pos.latitude;
-        lng = pos.longitude;
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled) {
+        var perm = await Geolocator.checkPermission();
+        if (perm == LocationPermission.denied) {
+          perm = await Geolocator.requestPermission();
+        }
+        if (perm == LocationPermission.always ||
+            perm == LocationPermission.whileInUse) {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          ).timeout(const Duration(seconds: 6));
+          lat = pos.latitude;
+          lng = pos.longitude;
+        }
       }
-    } catch (_) {}
+    } catch (_) {
+      // Continue with default coords — better to send SOS with rough location than fail entirely
+    }
 
     // Check connectivity
-    final conn = await Connectivity().checkConnectivity();
-    final isOnline = conn.firstOrNull != ConnectivityResult.none;
+    bool isOnline = true;
+    try {
+      final conn = await Connectivity().checkConnectivity();
+      isOnline = conn.isNotEmpty && conn.first != ConnectivityResult.none;
+    } catch (_) {
+      isOnline = true; // assume online if check fails
+    }
 
     if (isOnline) {
       return await _triggerOnline(
-        id: id, lat: lat, lng: lng,
-        method: method, triggeredAt: triggeredAt,
+        id: id, lat: lat, lng: lng, method: method, triggeredAt: triggeredAt,
       );
     } else {
       return await _queueOffline(
-        id: id, lat: lat, lng: lng,
-        method: method, triggeredAt: triggeredAt,
+        id: id, lat: lat, lng: lng, method: method, triggeredAt: triggeredAt,
       );
     }
   }
 
-  // ── ONLINE PATH ───────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────
+  //  ONLINE TRIGGER
+  // ────────────────────────────────────────────────────────────────
   Future<SosResult> _triggerOnline({
-    required String id, required double lat, required double lng,
-    required String method, required DateTime triggeredAt,
+    required String id,
+    required double lat,
+    required double lng,
+    required String method,
+    required DateTime triggeredAt,
   }) async {
     final token = await _auth.getToken();
     if (token == null) {
       return SosResult(
-        success: false, wasOffline: false,
-        message: 'Not authenticated', messageBn: 'লগইন করুন',
+        success: false,
+        wasOffline: false,
+        message: 'Please log in first',
+        messageBn: 'প্রথমে লগইন করুন',
       );
     }
 
@@ -97,54 +111,88 @@ class SosService {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'id': id, 'latitude': lat, 'longitude': lng,
+          'id': id,
+          'latitude': lat,
+          'longitude': lng,
           'trigger_method': method,
           'triggered_at': triggeredAt.toIso8601String(),
         }),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 8));
 
-      final latencyMs = DateTime.now().difference(triggeredAt).inMilliseconds.toDouble();
+      final latencyMs =
+          DateTime.now().difference(triggeredAt).inMilliseconds.toDouble();
 
-      if (res.statusCode == 202) {
-        final data = jsonDecode(res.body);
+      if (res.statusCode == 202 || res.statusCode == 200) {
+        Map<String, dynamic> data = {};
+        try {
+          data = jsonDecode(res.body) as Map<String, dynamic>;
+        } catch (_) {}
+        final notified = data['notified_contacts_count'] ?? 0;
         return SosResult(
-          success: true, wasOffline: false,
-          message: 'Alert sent! ${data['notified_contacts_count']} contacts notified.',
-          messageBn: 'সংকেত পাঠানো হয়েছে! ${data['notified_contacts_count']} জনকে জানানো হয়েছে।',
+          success: true,
+          wasOffline: false,
+          message: 'Alert sent! $notified contacts notified.',
+          messageBn: notified > 0
+              ? 'সংকেত পাঠানো হয়েছে! $notified জনকে জানানো হয়েছে।'
+              : 'সংকেত পাঠানো হয়েছে! কোনো emergency contact যোগ করুন বেশি কার্যকর হবার জন্য।',
           latencyMs: latencyMs,
         );
       }
-    } catch (_) {}
 
-    return await _queueOffline(
-      id: id, lat: lat, lng: lng, method: method, triggeredAt: triggeredAt,
-    );
+      // 401 — token expired
+      if (res.statusCode == 401) {
+        return SosResult(
+          success: false,
+          wasOffline: false,
+          message: 'Session expired. Please log in again.',
+          messageBn: 'সেশন শেষ — আবার লগইন করুন',
+        );
+      }
+
+      // Any other error → queue offline
+      return await _queueOffline(
+        id: id, lat: lat, lng: lng, method: method, triggeredAt: triggeredAt,
+      );
+    } catch (_) {
+      return await _queueOffline(
+        id: id, lat: lat, lng: lng, method: method, triggeredAt: triggeredAt,
+      );
+    }
   }
 
-  // ── OFFLINE PATH  (Store & Retry) ─────────────────────────────
+  // ────────────────────────────────────────────────────────────────
+  //  OFFLINE QUEUE (Store & Retry)
+  // ────────────────────────────────────────────────────────────────
   Future<SosResult> _queueOffline({
-    required String id, required double lat, required double lng,
-    required String method, required DateTime triggeredAt,
+    required String id,
+    required double lat,
+    required double lng,
+    required String method,
+    required DateTime triggeredAt,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final existing = prefs.getStringList('offline_sos_queue') ?? [];
     existing.add(jsonEncode({
-      'id': id, 'latitude': lat, 'longitude': lng,
+      'id': id,
+      'latitude': lat,
+      'longitude': lng,
       'trigger_method': method,
       'triggered_at': triggeredAt.toIso8601String(),
-      'retry_count': 0,
     }));
     await prefs.setStringList('offline_sos_queue', existing);
     _watchConnectivity();
 
     return SosResult(
-      success: true, wasOffline: true,
-      message: 'SOS saved offline. Will send when connected.',
+      success: true,
+      wasOffline: true,
+      message: 'Saved offline. Will send when connected.',
       messageBn: 'নেটওয়ার্ক নেই — সংরক্ষিত হয়েছে। সংযোগ পেলেই পাঠানো হবে।',
     );
   }
 
-  // ── SYNC OFFLINE QUEUE ────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────
+  //  SYNC OFFLINE QUEUE
+  // ────────────────────────────────────────────────────────────────
   Future<void> syncOfflineQueue() async {
     final token = await _auth.getToken();
     if (token == null) return;
@@ -154,14 +202,17 @@ class SosService {
     if (raw.isEmpty) return;
 
     final payloads = raw.map((r) {
-      final m = jsonDecode(r) as Map<String, dynamic>;
-      return {
-        'id': m['id'], 'latitude': m['latitude'],
-        'longitude': m['longitude'],
-        'trigger_method': m['trigger_method'],
-        'triggered_at': m['triggered_at'],
-      };
-    }).toList();
+      try {
+        return jsonDecode(r) as Map<String, dynamic>;
+      } catch (_) {
+        return null;
+      }
+    }).where((m) => m != null).toList();
+
+    if (payloads.isEmpty) {
+      await prefs.remove('offline_sos_queue');
+      return;
+    }
 
     try {
       final res = await http.post(
@@ -172,39 +223,35 @@ class SosService {
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({'payloads': payloads}),
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(const Duration(seconds: 15));
 
       if (res.statusCode == 200) {
         await prefs.remove('offline_sos_queue');
       }
     } catch (_) {
-      // Exponential backoff handled server-side on next sync attempt
+      // Will retry next time connectivity changes
     }
   }
 
-  // ── CONNECTIVITY WATCHER ──────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────
+  //  CONNECTIVITY WATCHER
+  // ────────────────────────────────────────────────────────────────
   void _watchConnectivity() {
     _connectivitySub?.cancel();
-    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySub =
+        Connectivity().onConnectivityChanged.listen((results) {
       if (results.isNotEmpty && results.first != ConnectivityResult.none) {
         syncOfflineQueue();
       }
     });
   }
 
-  // ── PENDING COUNT ─────────────────────────────────────────────
   Future<int> getPendingCount() async {
     final prefs = await SharedPreferences.getInstance();
     return (prefs.getStringList('offline_sos_queue') ?? []).length;
   }
 
-  // ── SHAKE DETECTION (Android only, noop on web) ───────────────
-  void enableShakeDetection({required Function() onShake}) {
-    if (kIsWeb) return;
-    // sensors_plus works on Android — web skips this
+  void dispose() {
+    _connectivitySub?.cancel();
   }
-
-  void disableShakeDetection() {}
-
-  void dispose() { _connectivitySub?.cancel(); }
 }
