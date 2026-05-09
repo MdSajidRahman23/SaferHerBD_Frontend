@@ -1,5 +1,5 @@
 name: safeher_bangladesh
-description: SafeHer Bangladesh - AI-Driven Platform for Women Safety
+description: SafeHer Bangladesh — AI-Driven Platform for Women Safety
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,28 +10,45 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # HTTP & API
+  # ─────────── HTTP & API ───────────
   http: ^1.2.0
 
-  # Local Storage
+  # ─────────── Local Storage ───────────
   shared_preferences: ^2.2.3
 
-  # Location
+  # ─────────── Location ───────────
   geolocator: ^12.0.0
 
-  # MAPS — Free OpenStreetMap (works on web & mobile, no key)
+  # ─────────── Maps (free OpenStreetMap) ───────────
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
 
-  # UI
+  # ─────────── UI ───────────
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10+1
+  cached_network_image: ^3.4.1
+  intl: ^0.19.0
 
-  # Connectivity
+  # ─────────── Connectivity ───────────
   connectivity_plus: ^6.0.5
 
-  # UUID
+  # ─────────── Battery (for SOS payload) ───────────
+  battery_plus: ^6.0.3
+
+  # ─────────── UUID ───────────
   uuid: ^4.4.2
+
+  # ─────────── Push Notifications ───────────
+  firebase_core: ^3.6.0
+  firebase_messaging: ^15.1.3
+  flutter_local_notifications: ^17.2.3
+
+  # ─────────── External actions ───────────
+  url_launcher: ^6.3.1
+  permission_handler: ^11.3.1
+
+  # ─────────── Background SOS retry ───────────
+  workmanager: ^0.5.2
 
 dev_dependencies:
   flutter_test:
@@ -40,3 +57,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/

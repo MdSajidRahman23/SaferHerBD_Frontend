@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-// ════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  COLOR TOKENS — exactly matching design CSS variables
-// ════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 class AppColors {
   // Bangladesh brand
   static const green     = Color(0xFF006A4E);
@@ -33,7 +34,7 @@ class AppColors {
   static const mapRiver   = Color(0xFF1E3A5F);
   static const mapRiverHi = Color(0xFF2C5282);
 
-  // ── Backward-compat aliases (used by old screens) ─────────────
+  // ── Backward-compat aliases (used by old screens) ──
   static const g    = green;
   static const gd   = greenDeep;
   static const gdd  = Color(0xFF003328);
@@ -55,41 +56,109 @@ class AppColors {
   static const greenDeeper = gdd;
 }
 
-// ════════════════════════════════════════════════════════════════
-//  API CONFIG  (matched to Laravel routes)
-// ════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+//  API CONFIG — environment-aware URL handling
+// ═══════════════════════════════════════════════════════════════
+//
+// Build with custom URL:
+//   flutter run --dart-define=API_BASE_URL=https://api.safeher.bd/api
+//
+// Defaults:
+//   • Android emulator: http://10.0.2.2:8000/api  (host loopback alias)
+//   • iOS simulator:    http://127.0.0.1:8000/api
+//   • Web (Chrome):     http://127.0.0.1:8000/api
+//   • Real device:      MUST set API_BASE_URL via --dart-define
+//
 class ApiConfig {
-  static const baseUrl   = 'http://127.0.0.1:8000/api';
-  static const mlBaseUrl = 'http://127.0.0.1:8001';
+  static const String _customBaseUrl =
+      String.fromEnvironment('API_BASE_URL', defaultValue: '');
 
-  static const loginUrl       = '$baseUrl/login';
-  static const register       = '$baseUrl/register';
-  static const userUrl        = '$baseUrl/user';
-  static const fcmToken       = '$baseUrl/user/fcm-token';
+  static const String _customMlBaseUrl =
+      String.fromEnvironment('ML_API_BASE_URL', defaultValue: '');
 
-  static const sosTrigger     = '$baseUrl/sos/trigger';
-  static const sosSyncOffline = '$baseUrl/sos/sync-offline';
+  static String get baseUrl {
+    if (_customBaseUrl.isNotEmpty) return _customBaseUrl;
 
-  static const contacts       = '$baseUrl/emergency-contacts';
+    if (kIsWeb) return 'http://127.0.0.1:8000/api';
 
-  static const riskPredict    = '$baseUrl/risk-engine/predict';
-  static const routeSafest    = '$baseUrl/route/safest';
+    // Android emulator → 10.0.2.2 maps to host 127.0.0.1
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8000/api';
+    }
+    return 'http://127.0.0.1:8000/api';
+  }
 
-  static const forumPosts     = '$baseUrl/forum/posts';
+  static String get mlBaseUrl {
+    if (_customMlBaseUrl.isNotEmpty) return _customMlBaseUrl;
+    if (kIsWeb) return 'http://127.0.0.1:8001';
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8001';
+    }
+    return 'http://127.0.0.1:8001';
+  }
 
-  static const chatbot        = '$baseUrl/chat';
+  // ─────── Auth ───────
+  static String get loginUrl    => '$baseUrl/login';
+  static String get register    => '$baseUrl/register';
+  static String get logoutUrl   => '$baseUrl/logout';
+  static String get userUrl     => '$baseUrl/user';
 
-  static const legalResources = '$baseUrl/legal-resources';
-  static const safetyIndex    = '$baseUrl/safety-index';
+  // ─────── Profile ───────
+  static String get profile          => '$baseUrl/profile';
+  static String get changePassword   => '$baseUrl/profile/change-password';
+  static String get changePin        => '$baseUrl/profile/change-pin';
+  static String get fcmToken         => '$baseUrl/user/fcm-token';
+
+  // ─────── SOS ───────
+  static String get sosTrigger       => '$baseUrl/sos/trigger';
+  static String get sosSyncOffline   => '$baseUrl/sos/sync-offline';
+  static String get sosHistory       => '$baseUrl/sos/history';
+  static String sosTrack(String id)  => '$baseUrl/sos/$id/track';
+
+  // ─────── Contacts ───────
+  static String get contacts         => '$baseUrl/emergency-contacts';
+
+  // ─────── Risk / Route ───────
+  static String get riskPredict      => '$baseUrl/risk-engine/predict';
+  static String get routeSafest      => '$baseUrl/route/safest';
+
+  // ─────── Forum ───────
+  static String get forumPosts       => '$baseUrl/forum/posts';
+
+  // ─────── Chatbot ───────
+  static String get chatbot          => '$baseUrl/chat';
+
+  // ─────── Public resources ───────
+  static String get legalResources   => '$baseUrl/legal-resources';
+  static String get safetyIndex      => '$baseUrl/safety-index';
+  static String get recentAlerts     => '$baseUrl/recent-alerts';
+  static String get geocode          => '$baseUrl/geocode';
+  static String get reverseGeocode   => '$baseUrl/geocode/reverse';
+
+  // ─────── Notifications ───────
+  static String get notifications        => '$baseUrl/notifications';
+  static String get notificationsUnread  => '$baseUrl/notifications/unread-count';
+  static String get notificationsReadAll => '$baseUrl/notifications/read-all';
 }
 
-// ════════════════════════════════════════════════════════════════
-//  PAID + FREE service config
-// ════════════════════════════════════════════════════════════════
-class ServiceConfig {
-  static const String googleMapsApiKey = '';
-  static bool get useGoogleMaps => googleMapsApiKey.isNotEmpty;
 
-  static const String firebaseServerKey = '';
-  static bool get useFCM => firebaseServerKey.isNotEmpty;
+// ═══════════════════════════════════════════════════════════════
+//  EXTERNAL SERVICES CONFIG
+// ═══════════════════════════════════════════════════════════════
+class ServiceConfig {
+  // Set with: --dart-define=ORS_API_KEY=...
+  static const String orsApiKey =
+      String.fromEnvironment('ORS_API_KEY', defaultValue: '');
+
+  static const String googleMapsApiKey =
+      String.fromEnvironment('GOOGLE_MAPS_KEY', defaultValue: '');
+
+  static bool get useGoogleMaps => googleMapsApiKey.isNotEmpty;
+  static bool get hasOrsKey     => orsApiKey.isNotEmpty;
+
+  // Important crisis helplines (Bangladesh)
+  static const String helpline109     = '109';   // Women & Child Helpline
+  static const String helpline999     = '999';   // National Emergency
+  static const String kaanPeteRoi     = '9612119911'; // Mental health
 }

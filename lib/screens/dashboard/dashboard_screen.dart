@@ -1,129 +1,117 @@
-import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
-import '../../services/sos_service.dart';
 import '../../utils/constants.dart';
-import '../../widgets/design_widgets.dart';
 
 class DashboardScreen extends StatefulWidget {
   final void Function(String) onNav;
   const DashboardScreen({super.key, required this.onNav});
+
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen>
-    with TickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen> {
   final _api = ApiService();
   final _auth = AuthService();
-  final _sos = SosService();
 
-  String _userName = 'User';
-  bool _holding = false;
-  Timer? _holdTimer;
-  double _holdProgress = 0;
-  bool _sosSending = false;
-  String? _sosResult;
-  bool _sosOk = true;
+  String _userName = '...';
+  String _firstName = '';
 
-  int _safetyScore = 85;
-  int _contactsCount = 0;
-  String _location = 'Dhaka';
+  Map<String, dynamic>? _city;
+  bool _safetyLoading = true;
+
+  List<dynamic> _alerts = [];
+  bool _alertsLoading = true;
+
+  int _unread = 0;
+
+  Position? _pos;
+  String _areaName = 'Bangladesh';
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _bootstrap();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _bootstrap() async {
+    await _loadUser();
+    await _resolveLocation();
+    await Future.wait([
+      _loadSafetyIndex(),
+      _loadRecentAlerts(),
+      _loadUnreadCount(),
+    ]);
+  }
+
+  Future<void> _loadUser() async {
     final u = await _auth.getUser();
-    final c = await _api.getContacts();
-    if (mounted) {
-      setState(() {
-        _userName = (u?['name'] ?? 'User').toString();
-        _contactsCount = c.length;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _userName = u?['name']?.toString() ?? 'Sister';
+      _firstName = _userName.split(' ').first;
+    });
+  }
 
-    // Try to load real safety index
+  Future<void> _resolveLocation() async {
     try {
-      final cities = await _api.getSafetyIndex();
-      if (cities.isNotEmpty && mounted) {
-        // Pick Dhaka or first city
-        final dhaka = cities.firstWhere(
-          (c) => (c['city'] ?? '').toString().contains('Dhaka'),
-          orElse: () => cities.first,
-        );
-        setState(() {
-          _safetyScore = (dhaka['score'] as num?)?.toInt() ?? 85;
-          _location = (dhaka['city'] ?? 'Dhaka').toString();
-        });
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
       }
-    } catch (_) {}
-  }
-
-  void _startHold() {
-    if (_sosSending) return;
-    setState(() {
-      _holding = true;
-      _holdProgress = 0;
-    });
-    HapticFeedback.lightImpact();
-    _holdTimer?.cancel();
-    _holdTimer = Timer.periodic(const Duration(milliseconds: 60), (t) {
-      if (!mounted || !_holding) {
-        t.cancel();
-        return;
+      _pos = await Geolocator.getCurrentPosition().timeout(const Duration(seconds: 6));
+      final addr = await _api.reverseGeocode(_pos!.latitude, _pos!.longitude);
+      if (addr != null) {
+        final m = (addr['address'] ?? {}) as Map<String, dynamic>;
+        _areaName = (m['city'] ?? m['town'] ?? m['suburb'] ?? m['state_district'] ?? 'Dhaka').toString();
       }
-      setState(() => _holdProgress += 6);
-      if (_holdProgress >= 100) {
-        t.cancel();
-        _triggerSOS();
-      }
-    });
-  }
-
-  void _cancelHold() {
-    _holdTimer?.cancel();
-    if (mounted && _holdProgress < 100) {
-      setState(() {
-        _holding = false;
-        _holdProgress = 0;
-      });
+      if (mounted) setState(() {});
+    } catch (_) {
+      _areaName = 'Dhaka';
     }
   }
 
-  Future<void> _triggerSOS() async {
-    HapticFeedback.heavyImpact();
+  Future<void> _loadSafetyIndex() async {
+    final all = await _api.getSafetyIndex();
     if (!mounted) return;
+    Map<String, dynamic>? match;
+    for (final c in all) {
+      final m = c as Map<String, dynamic>;
+      final cityName = (m['city']?.toString().toLowerCase() ?? '');
+      final area = _areaName.toLowerCase();
+      if (cityName.contains(area) || area.contains(cityName) && cityName.isNotEmpty) {
+        match = m;
+        break;
+      }
+    }
     setState(() {
-      _sosSending = true;
-      _holding = false;
-      _holdProgress = 0;
-    });
-
-    final res = await _sos.trigger(method: 'hold_button');
-
-    if (!mounted) return;
-    setState(() {
-      _sosSending = false;
-      _sosResult = res.messageBn;
-      _sosOk = res.success;
-    });
-
-    Future.delayed(const Duration(seconds: 6), () {
-      if (mounted) setState(() => _sosResult = null);
+      _city = match ?? (all.isNotEmpty ? all.first as Map<String, dynamic> : null);
+      _safetyLoading = false;
     });
   }
 
-  @override
-  void dispose() {
-    _holdTimer?.cancel();
-    super.dispose();
+  Future<void> _loadRecentAlerts() async {
+    final list = await _api.getRecentAlerts(
+      lat: _pos?.latitude,
+      lng: _pos?.longitude,
+      limit: 5,
+    );
+    if (!mounted) return;
+    setState(() {
+      _alerts = list;
+      _alertsLoading = false;
+    });
+  }
+
+  Future<void> _loadUnreadCount() async {
+    final n = await _api.getUnreadNotificationCount();
+    if (!mounted) return;
+    setState(() => _unread = n);
   }
 
   @override
@@ -131,490 +119,454 @@ class _DashboardScreenState extends State<DashboardScreen>
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SafeArea(
-        bottom: false,
-        child: Column(children: [
-          _buildHeader(),
-          _buildStatusChips(),
-          _buildSafetyCard(),
-          Expanded(child: Center(child: _buildSOSButton())),
-          if (_sosResult != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _sosOk
-                      ? AppColors.greenSoft
-                      : AppColors.redSoft,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: (_sosOk ? AppColors.green : AppColors.red)
-                        .withOpacity(0.3),
-                  ),
-                ),
-                child: Row(children: [
-                  Icon(
-                    _sosOk ? Icons.check_circle : Icons.warning_amber_rounded,
-                    color: _sosOk ? AppColors.green : AppColors.red,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: BnText(_sosResult!,
-                        size: 11.5,
-                        weight: FontWeight.w600,
-                        color: _sosOk ? AppColors.green : AppColors.red),
-                  ),
-                ]),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-            child: Row(children: [
-              Expanded(child: _buildContactsCard()),
-              const SizedBox(width: 10),
-              Expanded(child: _buildAlertsCard()),
-            ]),
-          ),
-          BottomNavBar(active: 'home', onNav: widget.onNav),
-        ]),
-      ),
-    );
-  }
-
-  Widget _buildHeader() => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-        child: Row(children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.line),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFFCD7DD), Colors.white],
-              ),
-            ),
-            child: const Icon(Icons.person_outline,
-                size: 18, color: AppColors.ink2),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const EnText('Good evening,',
-                      size: 11,
-                      color: AppColors.ink3,
-                      weight: FontWeight.w500),
-                  EnText(_userName,
-                      size: 14, weight: FontWeight.w700),
-                ]),
-          ),
-          IconBtn(
-            icon: Icons.notifications_outlined,
-            badge: Container(
-              width: 7, height: 7,
-              decoration: const BoxDecoration(
-                  shape: BoxShape.circle, color: AppColors.red),
-            ),
-            onTap: () {},
-          ),
-          const SizedBox(width: 8),
-          IconBtn(
-              icon: Icons.settings_outlined,
-              onTap: () => widget.onNav('settings')),
-        ]),
-      );
-
-  Widget _buildStatusChips() => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-        child: Row(children: [
-          const StatusChip(
-              icon: Icons.gps_fixed,
-              label: 'GPS Active',
-              sub: '±4m',
-              ok: true),
-          const SizedBox(width: 8),
-          const StatusChip(
-              icon: Icons.wifi,
-              label: 'Synced',
-              sub: '0 queued',
-              ok: true),
-          const SizedBox(width: 8),
-          StatusChip(
-              icon: Icons.shield_outlined,
-              label: 'Guardian',
-              sub: '$_contactsCount active',
-              tone: AppColors.green),
-        ]),
-      );
-
-  Widget _buildSafetyCard() {
-    final scoreLabel = _safetyScore >= 75
-        ? 'SAFE'
-        : _safetyScore >= 50
-            ? 'CAUTION'
-            : 'RISK';
-    final scoreColor = _safetyScore >= 75
-        ? AppColors.green
-        : _safetyScore >= 50
-            ? AppColors.amber
-            : AppColors.red;
-    final scoreBg = _safetyScore >= 75
-        ? AppColors.greenSoft
-        : _safetyScore >= 50
-            ? const Color(0xFFFEF3C7)
-            : AppColors.redSoft;
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const EnText('AREA SAFETY INDEX',
-                        size: 11,
-                        weight: FontWeight.w600,
-                        color: AppColors.ink3,
-                        letterSpacing: 0.4),
-                    const SizedBox(height: 4),
-                    Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          EnText('$_safetyScore',
-                              size: 28,
-                              weight: FontWeight.w800,
-                              letterSpacing: -0.8,
-                              color: scoreColor),
-                          const SizedBox(width: 4),
-                          const EnText('/100',
-                              size: 13,
-                              weight: FontWeight.w600,
-                              color: AppColors.ink2),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: scoreBg,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: EnText(scoreLabel,
-                                size: 11,
-                                weight: FontWeight.w700,
-                                color: scoreColor),
-                          ),
-                        ]),
-                    const SizedBox(height: 6),
-                    Row(children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 11, color: AppColors.ink2),
-                      const SizedBox(width: 3),
-                      EnText(_location,
-                          size: 11, color: AppColors.ink2),
-                    ]),
-                  ])),
-          GaugeMeter(value: _safetyScore.toDouble()),
-        ]),
-        const SizedBox(height: 12),
-        Row(children: const [
-          _MetricBox(k: 'Lighting', v: 92),
-          SizedBox(width: 6),
-          _MetricBox(k: 'Patrol', v: 78),
-          SizedBox(width: 6),
-          _MetricBox(k: 'Crowd', v: 86),
-        ]),
-      ]),
-    );
-  }
-
-  Widget _buildSOSButton() {
-    return Stack(alignment: Alignment.center, children: [
-      if (!_holding && !_sosSending)
-        const PulseRing(color: AppColors.red, size: 220),
-      if (!_holding && !_sosSending)
-        const PulseRing(
-            color: AppColors.red,
-            size: 220,
-            delay: Duration(milliseconds: 600)),
-      Container(
-        width: 196, height: 196,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-              color: AppColors.green.withOpacity(0.35), width: 1),
-        ),
-      ),
-      GestureDetector(
-        onTapDown: (_) => _startHold(),
-        onTapUp: (_) => _cancelHold(),
-        onTapCancel: _cancelHold,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          width: 168, height: 168,
-          transform: Matrix4.identity()..scale(_holding ? 0.96 : 1.0),
-          transformAlignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const RadialGradient(
-              center: Alignment(-0.4, -0.4),
-              colors: [Color(0xFFFF5A6F), AppColors.red],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.red.withOpacity(0.65),
-                offset: const Offset(0, 28),
-                blurRadius: 60,
-                spreadRadius: -18,
-              ),
+        child: RefreshIndicator(
+          onRefresh: _bootstrap,
+          color: AppColors.green,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildTopBar(),
+              const SizedBox(height: 18),
+              _buildHeroCard(),
+              const SizedBox(height: 18),
+              _buildSosBigButton(),
+              const SizedBox(height: 18),
+              _buildQuickActions(),
+              const SizedBox(height: 18),
+              _buildSafetyMetrics(),
+              const SizedBox(height: 18),
+              _buildAlertsCard(),
+              const SizedBox(height: 18),
+              _buildBottomNav(),
+              const SizedBox(height: 12),
             ],
           ),
-          child: Stack(alignment: Alignment.center, children: [
-            // Conic progress overlay
-            if (_holding)
-              SizedBox(
-                width: 168, height: 168,
-                child: CustomPaint(
-                  painter: _SosProgressPainter(_holdProgress),
-                ),
-              ),
-            Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_sosSending) ...[
-                    const SizedBox(
-                        width: 32, height: 32,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 3)),
-                    const SizedBox(height: 6),
-                    const EnText('SENDING',
-                        size: 12,
-                        weight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 2),
-                  ] else ...[
-                    const EnText('SOS',
-                        size: 44,
-                        weight: FontWeight.w800,
-                        letterSpacing: 2,
-                        color: Colors.white,
-                        height: 1),
-                    const SizedBox(height: 4),
-                    const BnText('জরুরি সহায়তা',
-                        size: 12,
-                        weight: FontWeight.w600,
-                        color: Colors.white,
-                        height: 1),
-                    const SizedBox(height: 4),
-                    EnText('HOLD 1.5s',
-                        size: 9.5,
-                        weight: FontWeight.w600,
-                        color: Colors.white.withOpacity(0.85),
-                        letterSpacing: 1),
-                  ],
-                ]),
-          ]),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Row(children: [
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('হ্যালো, ${_firstName.isEmpty ? "Sister" : _firstName}',
+              style: GoogleFonts.hindSiliguri(
+                  color: AppColors.ink, fontWeight: FontWeight.w800, fontSize: 19)),
+          const SizedBox(height: 2),
+          Text('Stay safe, stay connected.',
+              style: GoogleFonts.inter(color: AppColors.ink2, fontSize: 12)),
+        ]),
+      ),
+      _IconBtn(
+        icon: Icons.notifications_outlined,
+        badgeCount: _unread,
+        onTap: () => Navigator.pushNamed(context, '/notifications').then((_) => _loadUnreadCount()),
+      ),
+      const SizedBox(width: 8),
+      _IconBtn(
+        icon: Icons.person_outline,
+        onTap: () => widget.onNav('profile'),
       ),
     ]);
   }
 
-  Widget _buildContactsCard() {
-    return GlassCard(
-        onTap: () => widget.onNav('settings'),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: const [
-                EnText('QUICK CONTACTS',
-                    size: 11,
-                    weight: FontWeight.w700,
-                    letterSpacing: 0.4),
-                Spacer(),
-                Icon(Icons.add, size: 14, color: AppColors.ink3),
-              ]),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 28,
-                child: _contactsCount == 0
-                    ? const EnText('No contacts yet',
-                        size: 11, color: AppColors.ink3)
-                    : Stack(children: [
-                        for (int i = 0;
-                            i < (_contactsCount > 3 ? 3 : _contactsCount);
-                            i++)
-                          Positioned(
-                            left: i * 20.0,
-                            child: Container(
-                              width: 28, height: 28,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: [
-                                  AppColors.green,
-                                  AppColors.red,
-                                  const Color(0xFF1F2937)
-                                ][i % 3],
-                                border: Border.all(
-                                    color: Colors.white, width: 2),
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.person,
-                                    size: 14, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        if (_contactsCount > 3)
-                          Positioned(
-                            left: 60,
-                            child: Container(
-                              width: 28, height: 28,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                                border: Border.all(
-                                    color: AppColors.ink3, width: 1),
-                              ),
-                              child: Center(
-                                child: EnText(
-                                    '+${_contactsCount - 3}',
-                                    size: 10,
-                                    weight: FontWeight.w700,
-                                    color: AppColors.ink3),
-                              ),
-                            ),
-                          ),
-                      ]),
-              ),
-              const SizedBox(height: 8),
-              const EnText('Auto-call on SOS',
-                  size: 10, color: AppColors.ink3),
-            ]));
+  Widget _buildHeroCard() {
+    if (_safetyLoading) return const _Skeleton(height: 130);
+    final score = (_city?['score'] ?? 0) as int;
+    final level = (_city?['risk_level'] ?? 'caution').toString();
+    final cityName = (_city?['city'] ?? _areaName).toString();
+    final color = _scoreColor(score);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.95), color.withOpacity(0.75)],
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(children: [
+        Container(
+          width: 70, height: 70,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
+          ),
+          alignment: Alignment.center,
+          child: Text('$score',
+              style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w900, fontSize: 26)),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Safety Index', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11)),
+            const SizedBox(height: 2),
+            Text(cityName,
+                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 19)),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(20)),
+              child: Text(level.toUpperCase(),
+                  style: GoogleFonts.inter(
+                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.6)),
+            ),
+          ]),
+        ),
+      ]),
+    );
   }
 
-  Widget _buildAlertsCard() => GlassCard(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: const [
-          EnText('RECENT ALERTS',
-              size: 11, weight: FontWeight.w700, letterSpacing: 0.4),
-          Spacer(),
-          Icon(Icons.chevron_right, size: 14, color: AppColors.ink3),
+  Widget _buildSosBigButton() {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/sos'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 22),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.red, Color(0xFFC41E32)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [BoxShadow(color: AppColors.red.withOpacity(0.4), blurRadius: 18, offset: const Offset(0, 6))],
+        ),
+        child: Column(children: [
+          const Icon(Icons.shield, color: Colors.white, size: 36),
+          const SizedBox(height: 8),
+          Text('EMERGENCY SOS',
+              style: GoogleFonts.inter(
+                  color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1.5)),
+          const SizedBox(height: 4),
+          Text('Tap to alert your contacts',
+              style: GoogleFonts.inter(color: Colors.white70, fontSize: 11)),
         ]),
-        const SizedBox(height: 6),
-        const _AlertRow(
-            tone: AppColors.amber, t: 'Catcalling', sub: 'Mirpur · 2h'),
-        const _AlertRow(tone: AppColors.red, t: 'Snatching', sub: 'Karwan · 5h'),
-      ]));
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Row(children: [
+      _Quick(icon: Icons.alt_route, label: 'Safe Route', onTap: () => widget.onNav('route')),
+      const SizedBox(width: 10),
+      _Quick(icon: Icons.chat_bubble_outline, label: 'Mitra', onTap: () => widget.onNav('mitra')),
+      const SizedBox(width: 10),
+      _Quick(icon: Icons.groups_2_outlined, label: 'Community', onTap: () => widget.onNav('community')),
+      const SizedBox(width: 10),
+      _Quick(icon: Icons.gavel, label: 'Legal Aid', onTap: () => widget.onNav('legal')),
+    ]);
+  }
+
+  Widget _buildSafetyMetrics() {
+    if (_safetyLoading) return const _Skeleton(height: 120);
+
+    final sub = (_city?['sub_metrics'] ?? {}) as Map<String, dynamic>;
+    final street = (sub['street_safety'] ?? 0) as int;
+    final digital = (sub['digital_safety'] ?? 0) as int;
+    final pub = (sub['public_safety'] ?? 0) as int;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text('Safety Breakdown',
+              style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 13.5)),
+          const Spacer(),
+          Text('Live',
+              style: GoogleFonts.inter(color: AppColors.green, fontWeight: FontWeight.w700, fontSize: 10)),
+        ]),
+        const SizedBox(height: 12),
+        _Metric(label: 'Street safety', value: street),
+        const SizedBox(height: 8),
+        _Metric(label: 'Digital safety', value: digital),
+        const SizedBox(height: 8),
+        _Metric(label: 'Public spaces', value: pub),
+      ]),
+    );
+  }
+
+  Widget _buildAlertsCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Text('Recent Alerts',
+              style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 13.5)),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.amber.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text('${_alerts.length} active',
+                style: GoogleFonts.inter(color: AppColors.amber, fontWeight: FontWeight.w700, fontSize: 10)),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        if (_alertsLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(child: CircularProgressIndicator(color: AppColors.green, strokeWidth: 2)),
+          )
+        else if (_alerts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('No nearby alerts. Stay aware.',
+                style: GoogleFonts.inter(color: AppColors.ink3, fontSize: 12)),
+          )
+        else
+          ..._alerts.take(3).map((a) => _AlertRow(alert: a as Map<String, dynamic>)),
+      ]),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+        _NavBtn(icon: Icons.home_outlined, label: 'Home', selected: true, onTap: () {}),
+        _NavBtn(icon: Icons.alt_route, label: 'Route', selected: false, onTap: () => widget.onNav('route')),
+        _NavBtn(icon: Icons.chat_bubble_outline, label: 'Mitra', selected: false, onTap: () => widget.onNav('mitra')),
+        _NavBtn(icon: Icons.groups_2_outlined, label: 'Forum', selected: false, onTap: () => widget.onNav('community')),
+        _NavBtn(icon: Icons.settings_outlined, label: 'Settings', selected: false, onTap: () => widget.onNav('settings')),
+      ]),
+    );
+  }
+
+  Color _scoreColor(int s) {
+    if (s >= 75) return AppColors.green;
+    if (s >= 50) return AppColors.amber;
+    return AppColors.red;
+  }
 }
 
-class _MetricBox extends StatelessWidget {
-  final String k;
-  final int v;
-  const _MetricBox({required this.k, required this.v});
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final int badgeCount;
+  const _IconBtn({required this.icon, required this.onTap, this.badgeCount = 0});
+
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.bg,
-          borderRadius: BorderRadius.circular(10),
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.line),
+          ),
+          child: Icon(icon, color: AppColors.ink, size: 20),
         ),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              EnText(k.toUpperCase(),
-                  size: 9.5,
-                  weight: FontWeight.w600,
-                  color: AppColors.ink3),
-              const SizedBox(height: 4),
-              Row(children: [
-                Expanded(
-                  child: Container(
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.line,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: v / 100,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.green,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                  ),
+        if (badgeCount > 0)
+          Positioned(
+            top: -4, right: -4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: AppColors.red,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  badgeCount > 99 ? '99+' : '$badgeCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(width: 6),
-                EnText('$v', size: 11, weight: FontWeight.w700),
-              ]),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
+class _Quick extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _Quick({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.line),
+            ),
+            child: Column(children: [
+              Icon(icon, color: AppColors.green, size: 22),
+              const SizedBox(height: 6),
+              Text(label,
+                  style: GoogleFonts.inter(
+                      color: AppColors.ink, fontWeight: FontWeight.w600, fontSize: 11)),
             ]),
+          ),
+        ),
+      );
+}
+
+class _Metric extends StatelessWidget {
+  final String label;
+  final int value;
+  const _Metric({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = value >= 75 ? AppColors.green : (value >= 50 ? AppColors.amber : AppColors.red);
+    return Row(children: [
+      SizedBox(
+        width: 110,
+        child: Text(label, style: GoogleFonts.inter(color: AppColors.ink2, fontSize: 12)),
+      ),
+      Expanded(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: LinearProgressIndicator(
+            value: value / 100,
+            minHeight: 8,
+            backgroundColor: AppColors.line,
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ),
+      ),
+      const SizedBox(width: 8),
+      SizedBox(
+        width: 32,
+        child: Text('$value',
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w800, fontSize: 12)),
+      ),
+    ]);
+  }
+}
+
+class _AlertRow extends StatelessWidget {
+  final Map<String, dynamic> alert;
+  const _AlertRow({required this.alert});
+
+  @override
+  Widget build(BuildContext context) {
+    final cat = (alert['category_bn']?.toString().isNotEmpty == true ? alert['category_bn'] : alert['category_en']) ?? '';
+    final loc = (alert['location_bn']?.toString().isNotEmpty == true ? alert['location_bn'] : alert['location_en']) ?? '';
+    final risk = alert['risk_level']?.toString() ?? 'medium';
+    final dateStr = alert['incident_date']?.toString() ?? '';
+    final color = _riskColor(risk);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(cat.toString(),
+                style: GoogleFonts.hindSiliguri(
+                    color: AppColors.ink, fontWeight: FontWeight.w600, fontSize: 12.5)),
+            Text('$loc · ${_relTime(dateStr)}',
+                style: GoogleFonts.hindSiliguri(color: AppColors.ink3, fontSize: 11)),
+          ]),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+          child: Text(risk.toUpperCase(),
+              style: GoogleFonts.inter(
+                  color: color, fontWeight: FontWeight.w700, fontSize: 9, letterSpacing: 0.4)),
+        ),
+      ]),
+    );
+  }
+
+  Color _riskColor(String r) {
+    switch (r.toLowerCase()) {
+      case 'extreme':
+      case 'high':
+        return AppColors.red;
+      case 'medium':
+        return AppColors.amber;
+      default:
+        return AppColors.green;
+    }
+  }
+
+  String _relTime(String iso) {
+    if (iso.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(iso);
+      final diff = DateTime.now().difference(dt);
+      if (diff.inHours < 1) return '${diff.inMinutes}m';
+      if (diff.inHours < 24) return '${diff.inHours}h';
+      if (diff.inDays < 30) return '${diff.inDays}d';
+      return DateFormat('d MMM').format(dt);
+    } catch (_) {
+      return '';
+    }
+  }
+}
+
+class _NavBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _NavBtn({required this.icon, required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.green : AppColors.ink3;
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 3),
+          Text(label,
+              style: GoogleFonts.inter(
+                  color: color,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 10.5)),
+        ]),
       ),
     );
   }
 }
 
-class _AlertRow extends StatelessWidget {
-  final Color tone;
-  final String t, sub;
-  const _AlertRow({required this.tone, required this.t, required this.sub});
+class _Skeleton extends StatelessWidget {
+  final double height;
+  const _Skeleton({required this.height});
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
-        child: Row(children: [
-          Container(
-            width: 6, height: 6,
-            decoration: BoxDecoration(
-                color: tone, borderRadius: BorderRadius.circular(3)),
-          ),
-          const SizedBox(width: 6),
-          EnText(t, size: 11.5, weight: FontWeight.w600),
-          const Spacer(),
-          EnText(sub, size: 10, color: AppColors.ink3),
-        ]),
+  Widget build(BuildContext context) => Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: AppColors.line.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(14),
+        ),
       );
-}
-
-// ── Custom progress arc painter ────────────────────────────────────
-class _SosProgressPainter extends CustomPainter {
-  final double progress; // 0–100
-  _SosProgressPainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 1;
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6
-      ..strokeCap = StrokeCap.round;
-
-    final sweep = (progress / 100.0) * 2 * math.pi;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      sweep,
-      false,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _SosProgressPainter old) =>
-      old.progress != progress;
 }

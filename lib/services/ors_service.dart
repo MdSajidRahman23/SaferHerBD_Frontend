@@ -1,56 +1,71 @@
-// ════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  OpenRouteService — Real Road Routing
-//  Free tier: 2000 requests/day
-//  Gives actual road-following coordinates (not straight lines)
-// ════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//
+// 🔐 SECURITY: API key is NEVER hardcoded. Pass it at build time:
+//
+//   flutter run --dart-define=ORS_API_KEY=eyJxxx...
+//   flutter build apk --dart-define=ORS_API_KEY=eyJxxx...
+//
+// If the key is empty, the service will return null and the caller
+// will fall back to either the backend's safest-route endpoint or
+// a straight-line preview.
+//
+// Free tier: 2000 requests/day
+// Docs:      https://openrouteservice.org/dev/
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
+import '../utils/constants.dart';
 
 class OrsService {
-  // ORS API key from your backend .env
-  static const _apiKey =
-      'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjE2NTU1YzExNWIwNjRiOGQ4N2IwMjQzMGEzYmY1ODFiIiwiaCI6Im11cm11cjY0In0=';
+  static const String _baseUrl = 'https://api.openrouteservice.org/v2';
 
-  static const _baseUrl = 'https://api.openrouteservice.org/v2';
+  static bool get isConfigured => ServiceConfig.orsApiKey.isNotEmpty;
 
-  /// Get real road-following route between two points
-  /// Returns list of LatLng coordinates along actual roads
+  /// Get real road-following route between two points.
+  /// Returns null if API key not configured or request fails.
   static Future<OrsRouteResult?> getRoute({
     required LatLng start,
     required LatLng end,
     String profile = 'foot-walking', // foot-walking | driving-car | cycling-regular
   }) async {
+    if (!isConfigured) {
+      // No key — caller will use backend or straight-line fallback
+      return null;
+    }
+
     try {
       final url = '$_baseUrl/directions/$profile';
-      final res = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Authorization': _apiKey,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json, application/geo+json',
-        },
-        body: jsonEncode({
-          'coordinates': [
-            [start.longitude, start.latitude],
-            [end.longitude, end.latitude],
-          ],
-          'instructions': false,
-          'geometry': true,
-        }),
-      ).timeout(const Duration(seconds: 10));
+      final res = await http
+          .post(
+            Uri.parse(url),
+            headers: {
+              'Authorization': ServiceConfig.orsApiKey,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json, application/geo+json',
+            },
+            body: jsonEncode({
+              'coordinates': [
+                [start.longitude, start.latitude],
+                [end.longitude, end.latitude],
+              ],
+              'instructions': false,
+              'geometry': true,
+            }),
+          )
+          .timeout(const Duration(seconds: 12));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final route = data['routes'][0];
-
-        // Decode polyline geometry
         final geometry = route['geometry'] as String;
         final points = _decodePolyline(geometry);
 
         final summary = route['summary'];
-        final distanceM  = (summary['distance'] as num).toDouble();
-        final durationS  = (summary['duration'] as num).toDouble();
+        final distanceM = (summary['distance'] as num).toDouble();
+        final durationS = (summary['duration'] as num).toDouble();
 
         return OrsRouteResult(
           points: points,
@@ -58,13 +73,13 @@ class OrsService {
           durationMin: durationS / 60,
         );
       }
-    } catch (e) {
-      // Silently fail — caller shows fallback straight line
+    } catch (_) {
+      // Silent fail — caller handles fallback
     }
     return null;
   }
 
-  /// Decode ORS polyline encoding to LatLng list
+  /// Decode ORS-encoded polyline to LatLng list.
   static List<LatLng> _decodePolyline(String encoded) {
     final points = <LatLng>[];
     int index = 0;
@@ -80,7 +95,8 @@ class OrsService {
       final dLat = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
       lat += dLat;
 
-      shift = 0; result = 0;
+      shift = 0;
+      result = 0;
       do {
         b = encoded.codeUnitAt(index++) - 63;
         result |= (b & 0x1f) << shift;
