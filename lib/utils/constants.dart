@@ -179,6 +179,7 @@ class ApiConfig {
   // ─────── Risk / Route ───────
   static String get riskPredict      => '$baseUrl/risk-engine/predict';
   static String get routeSafest      => '$baseUrl/route/safest';
+  static String get safePlacesNearby => '$baseUrl/safe-places/nearby';
 
   // ─────── Forum ───────
   static String get forumPosts       => '$baseUrl/forum/posts';

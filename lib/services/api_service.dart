@@ -269,6 +269,22 @@ class ApiService {
     return null;
   }
 
+  Future<List<dynamic>> getNearbySafePlaces({
+    required double lat,
+    required double lng,
+    int radiusMeters = 1800,
+  }) async {
+    final uri = Uri.parse(ApiConfig.safePlacesNearby).replace(queryParameters: {
+      'lat': '$lat',
+      'lng': '$lng',
+      'radius_m': '$radiusMeters',
+    });
+    final res = await _safeGet(uri.toString(), timeout: const Duration(seconds: 15));
+    final body = _parseJson(res) ?? {};
+    if (res.statusCode == 200) return _extractList(body, ['places', 'data']);
+    return [];
+  }
+
   // ═══════════════════════════════════════════════════════════
   //  EMERGENCY CONTACTS
   // ═══════════════════════════════════════════════════════════
@@ -484,10 +500,16 @@ class ApiService {
   Future<Map<String, dynamic>?> sendChatMessage(
     String message, {
     String? sessionId,
+    double? latitude,
+    double? longitude,
   }) async {
     final body = <String, dynamic>{'message': message};
     if (sessionId != null && sessionId.trim().isNotEmpty) {
       body['session_id'] = sessionId.trim();
+    }
+    if (latitude != null && longitude != null) {
+      body['latitude'] = latitude;
+      body['longitude'] = longitude;
     }
     final res = await _safePost(ApiConfig.chatbot, body, timeout: const Duration(seconds: 45));
     final json = _parseJson(res) ?? <String, dynamic>{};
