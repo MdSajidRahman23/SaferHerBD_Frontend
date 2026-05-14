@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ═══════════════════════════════════════════════════════════════
 //  COLOR TOKENS — exactly matching design CSS variables
@@ -54,6 +55,62 @@ class AppColors {
   static const greenLight  = gl;
   static const greenDark   = gd;
   static const greenDeeper = gdd;
+}
+
+
+
+
+// ═══════════════════════════════════════════════════════════════
+//  TEXT STYLE TOKENS — shared bilingual typography helpers
+// ═══════════════════════════════════════════════════════════════
+class AppText {
+  static TextStyle bn({
+    double size = 14,
+    FontWeight w = FontWeight.w500,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.notoSansBengali(
+      fontSize: size,
+      fontWeight: w,
+      color: color ?? AppColors.ink,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  static TextStyle en({
+    double size = 14,
+    FontWeight w = FontWeight.w500,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.inter(
+      fontSize: size,
+      fontWeight: w,
+      color: color ?? AppColors.ink,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
+
+  static TextStyle mono({
+    double size = 13,
+    FontWeight w = FontWeight.w500,
+    Color? color,
+    double? height,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.robotoMono(
+      fontSize: size,
+      fontWeight: w,
+      color: color ?? AppColors.ink,
+      height: height,
+      letterSpacing: letterSpacing,
+    );
+  }
 }
 
 

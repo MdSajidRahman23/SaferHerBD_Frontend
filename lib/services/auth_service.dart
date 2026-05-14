@@ -20,7 +20,7 @@ class AuthService {
       final data = _safeJson(res.body);
 
       if (res.statusCode == 200 && data['success'] == true) {
-        final token = data['token']?.toString();
+        final token = (data['token'] ?? data['access_token'])?.toString();
         final user  = data['user'];
         if (token != null) {
           final prefs = await SharedPreferences.getInstance();
@@ -49,7 +49,7 @@ class AuthService {
       final data = _safeJson(res.body);
 
       if ((res.statusCode == 200 || res.statusCode == 201) && data['success'] == true) {
-        final token = data['token']?.toString();
+        final token = (data['token'] ?? data['access_token'])?.toString();
         final user  = data['user'];
         if (token != null) {
           final prefs = await SharedPreferences.getInstance();
@@ -103,6 +103,34 @@ class AuthService {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<Map<String, dynamic>?> refreshUser() async {
+    final token = await getToken();
+    if (token == null || token.isEmpty) return null;
+
+    try {
+      final res = await http.get(
+        Uri.parse(ApiConfig.userUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final data = _safeJson(res.body);
+        final user = data.containsKey('user') ? data['user'] : data;
+        if (user is Map<String, dynamic>) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_kUser, jsonEncode(user));
+          return user;
+        }
+      }
+    } catch (_) {
+      // Keep cached user on network errors.
+    }
+    return getUser();
   }
 
   Future<bool> isLoggedIn() async {

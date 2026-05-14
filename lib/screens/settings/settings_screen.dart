@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/api_service.dart';
+import '../../widgets/design_widgets.dart';
 import '../../utils/constants.dart';
 
 class SettingsScreen extends StatefulWidget {
   final void Function(String) onNav;
   final VoidCallback onBack;
   const SettingsScreen({super.key, required this.onNav, required this.onBack});
-
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final _api = ApiService();
   final _auth = AuthService();
+  final _api = ApiService();
 
-  String _lang = 'en';
+  Map<String, dynamic>? _user;
+  List<dynamic> _contacts = [];
+  bool _anonymize = true;
+  bool _stealth = false;
+  bool _shake = true;
   bool _loading = true;
 
   @override
@@ -29,178 +30,644 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _load() async {
-    final u = await _api.getProfile();
-    if (!mounted) return;
-    setState(() {
-      _lang = u?['preferred_language']?.toString() ?? 'en';
-      _loading = false;
-    });
-  }
-
-  Future<void> _setLang(String lang) async {
-    setState(() => _lang = lang);
-    final ok = await _api.updateProfile({'preferred_language': lang});
-    if (!ok && mounted) {
-      _toast('Could not save preference', error: true);
+    final u = await _auth.getUser();
+    final c = await _api.getContacts();
+    if (mounted) {
+      setState(() {
+        _user = u;
+        _contacts = c;
+        _loading = false;
+      });
     }
-  }
-
-  Future<void> _callHelpline(String number) async {
-    final uri = Uri.parse('tel:$number');
-    if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
   Future<void> _logout() async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
+        title: const BnText('লগআউট', size: 16, weight: FontWeight.w700),
+        content: const BnText('আপনি কি লগআউট করতে চান?',
+            size: 13, color: AppColors.ink2),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('না'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign out', style: TextStyle(color: Colors.white)),
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.red, foregroundColor: Colors.white),
+            child: const Text('হ্যাঁ'),
           ),
         ],
       ),
     );
-    if (ok != true || !mounted) return;
-    await _auth.logout();
-    if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+    if (ok == true) {
+      await _auth.logout();
+      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
-  void _toast(String msg, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: error ? AppColors.red : AppColors.green,
-      duration: const Duration(seconds: 2),
-    ));
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        backgroundColor: Colors.white, elevation: 0,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.ink), onPressed: widget.onBack),
-        title: Text('Settings',
-            style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 17)),
+  void _showHelpSupport() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.green))
-          : ListView(
-              padding: const EdgeInsets.all(14),
-              children: [
-                _section('Account', [
-                  _Tile(icon: Icons.person_outline, label: 'Profile',
-                      onTap: () => Navigator.pushNamed(context, '/profile')),
-                  _Tile(icon: Icons.history, label: 'SOS History',
-                      onTap: () => Navigator.pushNamed(context, '/sos-history')),
-                  _Tile(icon: Icons.notifications_outlined, label: 'Notifications',
-                      onTap: () => Navigator.pushNamed(context, '/notifications')),
-                ]),
-                const SizedBox(height: 14),
-                _section('Language', [
-                  _LangTile(label: 'English', value: 'en', current: _lang, onTap: () => _setLang('en')),
-                  _LangTile(label: 'বাংলা',    value: 'bn', current: _lang, onTap: () => _setLang('bn')),
-                ]),
-                const SizedBox(height: 14),
-                _section('Crisis Helplines', [
-                  _Tile(icon: Icons.phone, label: '109 — মহিলা ও শিশু সহায়তা', color: AppColors.red,
-                      onTap: () => _callHelpline('109')),
-                  _Tile(icon: Icons.phone, label: '999 — National Emergency', color: AppColors.red,
-                      onTap: () => _callHelpline('999')),
-                  _Tile(icon: Icons.phone, label: 'Kaan Pete Roi (mental health)',
-                      onTap: () => _callHelpline('9612119911')),
-                ]),
-                const SizedBox(height: 14),
-                _section('Session', [
-                  _Tile(icon: Icons.logout, label: 'Sign Out', color: AppColors.red, onTap: _logout),
-                ]),
-                const SizedBox(height: 28),
-                Center(
-                  child: Text('SafeHer Bangladesh • v1.0.0\n'
-                              '© 2026 DIU CSE',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(color: AppColors.ink3, fontSize: 11, height: 1.5)),
+      builder: (sheetContext) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.line,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 28),
-              ],
+              ),
             ),
-    );
-  }
-
-  Widget _section(String title, List<Widget> children) => Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.line),
-    ),
-    child: Column(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(title,
-              style: GoogleFonts.inter(
-                  color: AppColors.ink3, fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.6)),
+            const SizedBox(height: 16),
+            const EnText('Help & Support', size: 18, weight: FontWeight.w800),
+            const SizedBox(height: 6),
+            const BnText('জরুরি অবস্থায় 999 বা 109 নম্বরে কল করুন।', size: 13, color: AppColors.ink2),
+            const SizedBox(height: 14),
+            const _SupportRow(icon: Icons.emergency_outlined, title: 'Emergency', text: 'Call 999 or press SafeHer SOS.'),
+            const _SupportRow(icon: Icons.woman_outlined, title: 'Women & Children', text: 'Call 109 for support.'),
+            const _SupportRow(icon: Icons.route_outlined, title: 'Safe Route', text: 'Use Route tab to find safer paths.'),
+            const _SupportRow(icon: Icons.forum_outlined, title: 'Mitra / Sister Circle', text: 'Use Mitra for guidance and Sister Circle for moderated community support.'),
+          ],
         ),
       ),
-      ...children,
-    ]),
-  );
-}
+    );
+  }
 
-class _Tile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-  const _Tile({required this.icon, required this.label, required this.onTap, this.color});
+  void _showAboutSafeHer() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'SafeHerBD',
+      applicationVersion: 'v1.0.0',
+      applicationIcon: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.greenSoft,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.shield_outlined, color: AppColors.green),
+      ),
+      children: const [
+        SizedBox(height: 8),
+        Text('SafeHerBD is a women-safety project for SOS alerts, safe route guidance, Mitra support, moderated community posts and legal-aid resources.'),
+        SizedBox(height: 8),
+        Text('Emergency: 999. Women & Children Helpline: 109. This app is not a substitute for official emergency services.'),
+      ],
+    );
+  }
+
+  void _addContact() {
+    final nameC = TextEditingController();
+    final phoneC = TextEditingController();
+    final relC = TextEditingController();
+
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppColors.card,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (sheetContext) => Padding(
+              padding: EdgeInsets.fromLTRB(
+                  20, 20, 20, MediaQuery.of(sheetContext).viewInsets.bottom + 20),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: AppColors.line,
+                        borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 16),
+                const BnText('নতুন যোগাযোগ',
+                    size: 16, weight: FontWeight.w700),
+                const SizedBox(height: 16),
+                GovField(
+                    label: 'নাম',
+                    icon: Icons.person_outline,
+                    controller: nameC),
+                const SizedBox(height: 10),
+                GovField(
+                    label: 'ফোন',
+                    icon: Icons.phone,
+                    controller: phoneC,
+                    keyboardType: TextInputType.phone),
+                const SizedBox(height: 10),
+                GovField(
+                    label: 'সম্পর্ক',
+                    icon: Icons.people_outline,
+                    controller: relC),
+                const SizedBox(height: 16),
+                SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        if (nameC.text.isEmpty || phoneC.text.isEmpty) return;
+                        Navigator.pop(sheetContext);
+                        final res = await _api.addContact(
+                            name: nameC.text.trim(),
+                            phone: phoneC.text.trim(),
+                            relation: relC.text.trim().isEmpty
+                                ? 'Contact'
+                                : relC.text.trim(),
+                            priority: 1);
+                        final code = res['statusCode'] as int? ?? 0;
+                        final ok = code == 200 || code == 201;
+                        if (ok) _load();
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.green,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 0),
+                      child: const BnText('যোগ করুন',
+                          size: 14,
+                          weight: FontWeight.w600,
+                          color: Colors.white),
+                    )),
+              ]),
+            ));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppColors.ink;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        child: Row(children: [
-          Icon(icon, color: c, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label,
-                style: GoogleFonts.hindSiliguri(color: c, fontWeight: FontWeight.w600, fontSize: 13.5)),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.ink3, size: 18),
-        ]),
-      ),
+    final name = _user?['name'] ?? 'User';
+    final phone = _user?['phone'] ?? '+880';
+
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: SafeArea(
+          bottom: false,
+          child: Column(children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+              decoration: const BoxDecoration(
+                color: AppColors.card,
+                border:
+                    Border(bottom: BorderSide(color: AppColors.line)),
+              ),
+              child: Row(children: [
+                IconBtn(
+                    icon: Icons.chevron_left,
+                    onTap: widget.onBack,
+                    bg: AppColors.bg),
+                const SizedBox(width: 10),
+                const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      EnText('Secure Settings',
+                          size: 17,
+                          weight: FontWeight.w800,
+                          letterSpacing: -0.2),
+                      BnText('নিরাপত্তা ও গোপনীয়তা',
+                          size: 11, color: AppColors.ink3),
+                    ]),
+              ]),
+            ),
+
+            // Body
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: AppColors.green))
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                      children: [
+                        // Profile card
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.card,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.line),
+                          ),
+                          child: Row(children: [
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    AppColors.green,
+                                    Color(0xFF00A26B)
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: EnText(
+                                    name.isEmpty
+                                        ? 'U'
+                                        : name[0].toUpperCase(),
+                                    size: 18,
+                                    weight: FontWeight.w800,
+                                    color: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                  EnText(name,
+                                      size: 15, weight: FontWeight.w700),
+                                  Text(phone,
+                                      style: AppText.mono(
+                                          size: 11,
+                                          color: AppColors.ink3)),
+                                ])),
+                            IconBtn(
+                              icon: Icons.edit_outlined,
+                              onTap: () => widget.onNav('profile'),
+                            ),
+                          ]),
+                        ),
+
+                        const SizedBox(height: 12),
+                        _SettingTile(
+                          icon: Icons.person_outline,
+                          t: 'Edit profile',
+                          bn: 'প্রোফাইল সম্পাদনা',
+                          trailing: const Icon(Icons.chevron_right, color: AppColors.ink3),
+                          onTap: () => widget.onNav('profile'),
+                        ),
+
+                        const SizedBox(height: 20),
+                        const _SectionHeader(
+                            t: 'Privacy', bn: 'গোপনীয়তা'),
+                        _SettingTile(
+                          icon: Icons.privacy_tip_outlined,
+                          t: 'Anonymize my reports',
+                          bn: 'রিপোর্ট গোপন রাখুন',
+                          trailing: _Switch(
+                              v: _anonymize,
+                              onChange: (v) =>
+                                  setState(() => _anonymize = v)),
+                        ),
+                        _SettingTile(
+                          icon: Icons.app_blocking,
+                          t: 'Stealth app icon',
+                          bn: 'গোপন আইকন',
+                          trailing: _Switch(
+                              v: _stealth,
+                              onChange: (v) =>
+                                  setState(() => _stealth = v)),
+                        ),
+                        _SettingTile(
+                          icon: Icons.vibration,
+                          t: 'Shake to SOS',
+                          bn: 'ঝাঁকি দিয়ে SOS',
+                          trailing: _Switch(
+                              v: _shake,
+                              onChange: (v) =>
+                                  setState(() => _shake = v)),
+                        ),
+
+                        const SizedBox(height: 16),
+                        _SectionHeader(
+                            t: 'Emergency Contacts (${_contacts.length}/5)',
+                            bn: 'জরুরি যোগাযোগ',
+                            action: _addContact),
+
+                        if (_contacts.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.line),
+                            ),
+                            child: Column(children: [
+                              const Icon(Icons.person_add_outlined,
+                                  size: 32, color: AppColors.ink3),
+                              const SizedBox(height: 6),
+                              const BnText('কোনো যোগাযোগ নেই',
+                                  size: 12, color: AppColors.ink3),
+                              const SizedBox(height: 4),
+                              GestureDetector(
+                                onTap: _addContact,
+                                child: const EnText('+ Add now',
+                                    size: 12,
+                                    weight: FontWeight.w700,
+                                    color: AppColors.green),
+                              ),
+                            ]),
+                          )
+                        else
+                          ...List.generate(_contacts.length, (i) {
+                            final c = Map.from(_contacts[i]);
+                            final n = c['name'] ?? '';
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.card,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.line),
+                              ),
+                              child: Row(children: [
+                                CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor:
+                                        AppColors.greenSoft,
+                                    child: EnText(
+                                        n.isEmpty
+                                            ? '?'
+                                            : n[0].toUpperCase(),
+                                        size: 12,
+                                        weight: FontWeight.w700,
+                                        color: AppColors.green)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                    child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                      EnText(n,
+                                          size: 12.5,
+                                          weight: FontWeight.w700),
+                                      EnText(
+                                          '${c['relation'] ?? ''} · ${c['phone'] ?? ''}',
+                                          size: 10.5,
+                                          color: AppColors.ink3),
+                                    ])),
+                                IconButton(
+                                  icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: AppColors.red,
+                                      size: 18),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () async {
+                                    await _api.deleteContact(
+                                        c['id']?.toString() ?? '');
+                                    _load();
+                                  },
+                                ),
+                              ]),
+                            );
+                          }),
+
+                        const SizedBox(height: 16),
+                        const _SectionHeader(t: 'Account', bn: 'অ্যাকাউন্ট'),
+                        _SettingTile(
+                            icon: Icons.help_outline,
+                            t: 'Help & Support',
+                            bn: 'সাহায্য',
+                            onTap: _showHelpSupport),
+                        _SettingTile(
+                            icon: Icons.info_outline,
+                            t: 'About SafeHerBD',
+                            bn: 'পরিচিতি',
+                            onTap: _showAboutSafeHer),
+
+                        const SizedBox(height: 18),
+                        // Logout
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: _logout,
+                            icon: const Icon(Icons.logout,
+                                color: AppColors.red, size: 18),
+                            label: const EnText('Sign Out',
+                                size: 14,
+                                weight: FontWeight.w700,
+                                color: AppColors.red),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.red),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Quick exit
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final navigator = Navigator.of(context);
+                              // Quick Exit = full logout + force-redirect
+                              await _auth.logout();
+                              if (!mounted) return;
+                              navigator.pushNamedAndRemoveUntil(
+                                  '/login', (route) => false);
+                            },
+                            icon: const Icon(Icons.exit_to_app, size: 18),
+                            label: const Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  EnText('Quick Exit',
+                                      size: 14,
+                                      weight: FontWeight.w700,
+                                      color: Colors.white),
+                                  SizedBox(width: 6),
+                                  BnText('· দ্রুত বের হন',
+                                      size: 12, color: Colors.white),
+                                ]),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.red,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(12)),
+                                elevation: 0),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Center(
+                          child: Column(children: [
+                            BnText('গণপ্রজাতন্ত্রী বাংলাদেশ সরকার',
+                                size: 10, color: AppColors.ink3),
+                            SizedBox(height: 1),
+                            EnText('Government of Bangladesh · v1.0.0',
+                                size: 9.5,
+                                color: AppColors.ink3,
+                                letterSpacing: 0.4),
+                          ]),
+                        ),
+                      ],
+                    ),
+            ),
+          ])),
     );
   }
 }
 
-class _LangTile extends StatelessWidget {
-  final String label, value, current;
-  final VoidCallback onTap;
-  const _LangTile({required this.label, required this.value, required this.current, required this.onTap});
+
+class _SupportRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String text;
+  const _SupportRow({required this.icon, required this.title, required this.text});
 
   @override
-  Widget build(BuildContext context) {
-    final selected = current == value;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.line),
+        ),
         child: Row(children: [
-          Icon(selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-              color: selected ? AppColors.green : AppColors.ink3, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(label,
-              style: GoogleFonts.hindSiliguri(
-                  color: AppColors.ink, fontWeight: FontWeight.w600, fontSize: 13.5))),
+          Icon(icon, color: AppColors.green, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EnText(title, size: 12.5, weight: FontWeight.w800),
+                const SizedBox(height: 2),
+                EnText(text, size: 11, color: AppColors.ink2),
+              ],
+            ),
+          ),
         ]),
+      );
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String t, bn;
+  final VoidCallback? action;
+  const _SectionHeader({required this.t, required this.bn, this.action});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 2, 2, 8),
+      child: Row(children: [
+        EnText(t.toUpperCase(),
+            size: 10.5,
+            weight: FontWeight.w700,
+            color: AppColors.ink3,
+            letterSpacing: 0.6),
+        const SizedBox(width: 5),
+        BnText('· $bn', size: 11, color: AppColors.ink3),
+        const Spacer(),
+        if (action != null)
+          GestureDetector(
+            onTap: action,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.greenSoft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 13, color: AppColors.green),
+                    SizedBox(width: 2),
+                    EnText('Add',
+                        size: 11,
+                        weight: FontWeight.w700,
+                        color: AppColors.green),
+                  ]),
+            ),
+          ),
+      ]),
+    );
+  }
+}
+
+class _SettingTile extends StatelessWidget {
+  final IconData icon;
+  final String t, bn;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  const _SettingTile({
+    required this.icon,
+    required this.t,
+    required this.bn,
+    this.trailing,
+    this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.line),
+          ),
+          child: Row(children: [
+            Icon(icon, size: 18, color: AppColors.ink2),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  EnText(t, size: 13, weight: FontWeight.w600),
+                  BnText(bn, size: 11, color: AppColors.ink3),
+                ])),
+            if (trailing != null)
+              trailing!
+            else
+              const Icon(Icons.chevron_right,
+                  size: 18, color: AppColors.ink3),
+          ]),
+        ),
+      );
+}
+
+class _Switch extends StatelessWidget {
+  final bool v;
+  final ValueChanged<bool> onChange;
+  const _Switch({required this.v, required this.onChange});
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChange(!v),
+      child: Container(
+        width: 44,
+        height: 24,
+        decoration: BoxDecoration(
+          color: v ? AppColors.green : AppColors.line,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: AnimatedAlign(
+          duration: const Duration(milliseconds: 150),
+          alignment: v ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            width: 20,
+            height: 20,
+            margin: const EdgeInsets.all(2),
+            decoration: const BoxDecoration(
+                color: Colors.white, shape: BoxShape.circle),
+          ),
+        ),
       ),
     );
   }

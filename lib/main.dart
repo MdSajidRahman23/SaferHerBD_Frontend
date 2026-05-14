@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -54,7 +55,3 @@ class SafeHerApp extends StatelessWidget {
   }
 }
 
-void unawaited(Future<void> future) {
-  // Intentional fire-and-forget for non-critical async ops
-  future.ignore();
-}

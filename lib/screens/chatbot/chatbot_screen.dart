@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../services/api_service.dart';
 import '../../utils/constants.dart';
@@ -20,10 +18,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final _api = ApiService();
   final _ctrl = TextEditingController();
   final _scrollCtrl = ScrollController();
-  final _sessionId = const Uuid().v4();
+  String? _sessionId;
 
   final List<_Msg> _msgs = [
-    _Msg(
+    const _Msg(
       role: 'assistant',
       text: 'নমস্কার! আমি Mitra — আপনার confidential safety companion। '
             'আজকে আপনি কেমন আছেন? যা কিছু feel করছেন বা কোনো সাহায্য দরকার, '
@@ -48,18 +46,27 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     if (!mounted) return;
 
     if (res != null && res['success'] == true) {
+      _sessionId = res['session_id']?.toString() ?? _sessionId;
+      final reply = (res['reply'] ??
+              res['answer'] ??
+              res['message'] ??
+              (res['data'] is Map ? (res['data']['reply'] ?? res['data']['answer']) : null))
+          ?.toString();
       setState(() {
         _msgs.add(_Msg(
           role: 'assistant',
-          text: res['reply']?.toString() ?? '...',
+          text: (reply == null || reply.trim().isEmpty)
+              ? 'আমি শুনছি। আরেকটু বিস্তারিত বলুন, আমি সাহায্য করার চেষ্টা করব।'
+              : reply,
           isCrisis: res['is_crisis'] == true,
         ));
       });
     } else {
+      final detail = res == null ? 'network/server response পাওয়া যায়নি' : (res['message'] ?? 'request failed').toString();
       setState(() {
-        _msgs.add(const _Msg(
+        _msgs.add(_Msg(
           role: 'assistant',
-          text: 'দুঃখিত — এই মুহূর্তে connect করতে পারছি না। '
+          text: 'দুঃখিত — Mitra server-এর সাথে সংযোগে সমস্যা হচ্ছে ($detail)। '
                 'একটু পরে আবার চেষ্টা করুন। জরুরি হলে SOS button ব্যবহার করুন।',
         ));
       });
@@ -103,9 +110,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         backgroundColor: Colors.white, elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.ink), onPressed: widget.onBack),
         title: Row(children: [
-          CircleAvatar(
+          const CircleAvatar(
             radius: 16, backgroundColor: AppColors.greenSoft,
-            child: const Icon(Icons.spa, color: AppColors.green, size: 16),
+            child: Icon(Icons.spa, color: AppColors.green, size: 16),
           ),
           const SizedBox(width: 10),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -203,7 +210,7 @@ class _MsgBubble extends StatelessWidget {
             bottomLeft: Radius.circular(isUser ? 16 : 4),
             bottomRight: Radius.circular(isUser ? 4 : 16),
           ),
-          border: !isUser ? Border.all(color: msg.isCrisis ? AppColors.red.withOpacity(0.3) : AppColors.line) : null,
+          border: !isUser ? Border.all(color: msg.isCrisis ? AppColors.red.withValues(alpha: 0.3) : AppColors.line) : null,
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (msg.isCrisis) ...[

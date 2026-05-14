@@ -124,12 +124,18 @@ class _RouteScreenState extends State<RouteScreen> {
       travelMode: 'foot-walking',
     );
 
-    if (risk != null && risk['polyline_coords'] is List) {
-      final bp = (risk['polyline_coords'] as List)
-          .where((p) => p is List && p.length >= 2)
-          .map((p) => LatLng((p[1] as num).toDouble(), (p[0] as num).toDouble()))
-          .toList();
+    if (risk != null) {
+      final bp = _extractRoutePoints(risk);
       if (bp.isNotEmpty) points = bp;
+
+      final distanceKm = (risk['distance_km'] as num?)?.toDouble();
+      final durationMin = (risk['duration_min'] ?? risk['estimated_time_min']) as num?;
+      if (distanceKm != null && distanceKm > 0) {
+        _distanceText = '${distanceKm.toStringAsFixed(1)} কিমি';
+      }
+      if (durationMin != null && durationMin > 0) {
+        _durationText = '~${durationMin.round()} মিনিট';
+      }
     }
 
     if (!mounted) return;
@@ -145,6 +151,49 @@ class _RouteScreenState extends State<RouteScreen> {
         padding: const EdgeInsets.all(60),
       ));
     }
+  }
+
+
+  List<LatLng> _extractRoutePoints(Map<String, dynamic> risk) {
+    final raw = risk['route_coordinates'] ??
+        risk['polyline_coords'] ??
+        risk['coordinates'];
+
+    if (raw is List) {
+      final pts = <LatLng>[];
+      for (final p in raw) {
+        if (p is List && p.length >= 2 && p[0] is num && p[1] is num) {
+          // Backend/ORS/FastAPI use [longitude, latitude]
+          pts.add(LatLng((p[1] as num).toDouble(), (p[0] as num).toDouble()));
+        } else if (p is Map) {
+          final lat = (p['latitude'] ?? p['lat']) as num?;
+          final lng = (p['longitude'] ?? p['lng']) as num?;
+          if (lat != null && lng != null) pts.add(LatLng(lat.toDouble(), lng.toDouble()));
+        }
+      }
+      return pts;
+    }
+
+    final waypoints = risk['waypoints'];
+    if (waypoints is List) {
+      final pts = <LatLng>[];
+      for (final p in waypoints) {
+        if (p is Map) {
+          final lat = (p['latitude'] ?? p['lat']) as num?;
+          final lng = (p['longitude'] ?? p['lng']) as num?;
+          if (lat != null && lng != null) pts.add(LatLng(lat.toDouble(), lng.toDouble()));
+        }
+      }
+      return pts;
+    }
+
+    return [];
+  }
+
+  int _safetyScore({int fallback = 70}) {
+    final value = _backendRisk?['safety_score'];
+    if (value is num) return value.round().clamp(0, 100).toInt();
+    return fallback;
   }
 
   @override
@@ -302,14 +351,14 @@ class _RouteScreenState extends State<RouteScreen> {
   }
 
   Color _routeColor() {
-    final score = (_backendRisk?['safety_score'] ?? 70) as int;
+    final score = _safetyScore();
     if (score >= 75) return AppColors.green;
     if (score >= 50) return AppColors.amber;
     return AppColors.red;
   }
 
   Widget _buildRoutePanel() {
-    final score = (_backendRisk?['safety_score'] ?? 0) as int;
+    final score = _safetyScore(fallback: 0);
     final level = _backendRisk?['risk_level']?.toString() ?? '...';
     final color = _routeColor();
 
@@ -321,7 +370,7 @@ class _RouteScreenState extends State<RouteScreen> {
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 12)],
       ),
       child: _routing
-          ? Row(children: const [
+          ? const Row(children: [
               SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.green)),
               SizedBox(width: 12),
               Text('Calculating safest route…'),
@@ -331,7 +380,7 @@ class _RouteScreenState extends State<RouteScreen> {
                 Container(
                   width: 50, height: 50,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
                   child: Text(
                     score > 0 ? '$score' : '—',
                     style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w900, fontSize: 17),
@@ -349,7 +398,7 @@ class _RouteScreenState extends State<RouteScreen> {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+                  decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
                   child: Text(level.toUpperCase(),
                       style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 0.4)),
                 ),

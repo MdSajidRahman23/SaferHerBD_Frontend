@@ -94,7 +94,7 @@ class MapHelpers {
       point: point,
       width: size, height: size,
       child: Icon(icon, color: color, size: size,
-          shadows: [Shadow(color: Colors.black54, blurRadius: 4)]),
+          shadows: const [Shadow(color: Colors.black54, blurRadius: 4)]),
     );
   }
 
@@ -110,8 +110,8 @@ class MapHelpers {
       point: center,
       radius: radiusMeters,
       useRadiusInMeter: true,
-      color: color.withOpacity(0.15),
-      borderColor: color.withOpacity(0.5),
+      color: color.withValues(alpha: 0.15),
+      borderColor: color.withValues(alpha: 0.5),
       borderStrokeWidth: 1,
     );
   }
@@ -121,8 +121,9 @@ class MapHelpers {
       points: points,
       color: isSafe ? const Color(0xFF006A4E) : const Color(0xFFF42A41),
       strokeWidth: isSafe ? 4 : 3,
-      pattern: isSafe ? const StrokePattern.solid()
-                      : StrokePattern.dashed(segments: [10, 6]),
+      pattern: isSafe
+          ? const StrokePattern.solid()
+          : StrokePattern.dashed(segments: const [10, 6]),
     );
   }
 }

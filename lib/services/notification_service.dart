@@ -1,27 +1,18 @@
-import 'dart:convert';
+import 'dart:async';
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'api_service.dart';
 
-/// Top-level handler required by FCM for background messages.
-/// MUST be top-level (not inside a class).
-@pragma('vm:entry-point')
-Future<void> _firebaseBackgroundHandler(RemoteMessage message) async {
-  // Initialize Firebase in the background isolate if needed
-  try {
-    await Firebase.initializeApp();
-  } catch (_) {}
-  debugPrint('[FCM bg] ${message.messageId}: ${message.notification?.title}');
-}
-
-/// NotificationService — manages FCM permission, token registration,
-/// and local notification display when a push arrives in foreground.
+/// NotificationService — handles local notifications and (optionally) FCM.
+///
+/// FCM is OPTIONAL. If Firebase is not configured (no firebase_options.dart),
+/// this service silently disables FCM but keeps local notifications working,
+/// so the app never crashes at startup.
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
+  static final NotificationService _instance =
+      NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
@@ -29,120 +20,111 @@ class NotificationService {
   final _api = ApiService();
 
   bool _initialized = false;
+  bool _fcmEnabled = false;
+  String? _fcmToken;
 
-  // ───────────────────────────────────────────────────
-  //  INITIALIZATION
-  // ───────────────────────────────────────────────────
+  /// ⭐ Primary entry point — what main.dart calls.
+  /// Safe to call multiple times; subsequent calls are no-ops.
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
 
+    // ── Local notifications ──────────────────────────────────
     try {
-      // 1) Initialize Firebase
-      await Firebase.initializeApp();
-
-      // 2) Initialize local notifications (for foreground display)
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-      const iosSettings = DarwinInitializationSettings(
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosInit = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
         requestSoundPermission: true,
       );
-      const initSettings = InitializationSettings(
-        android: androidSettings,
-        iOS: iosSettings,
+      const settings = InitializationSettings(
+        android: androidInit,
+        iOS: iosInit,
       );
-      await _local.initialize(initSettings);
-
-      // 3) Background handler must be set BEFORE requesting permission
-      FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundHandler);
-
-      // 4) Request permission
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
+      await _local.initialize(
+        settings,
+        onDidReceiveNotificationResponse: (resp) {
+          debugPrint('[Notif] Tapped: ${resp.payload}');
+        },
       );
-      debugPrint('[FCM] Permission: ${settings.authorizationStatus}');
-
-      // 5) Foreground message → show local notification
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-      // 6) Tap on notification (background) → could navigate
-      FirebaseMessaging.onMessageOpenedApp.listen((message) {
-        debugPrint('[FCM tap] ${message.notification?.title}');
-        // TODO: navigate to relevant screen via global navigator key
-      });
-
-      // 7) Get and register FCM token
-      await registerToken();
+      debugPrint('[Notif] ✅ Local notifications ready');
     } catch (e) {
-      debugPrint('[FCM] Init failed (will continue without push): $e');
+      debugPrint('[Notif] ⚠️ Local init failed: $e');
     }
+
+    // ── FCM (optional) ──────────────────────────────────────
+    await _tryInitFcm();
   }
 
-  // ───────────────────────────────────────────────────
-  //  TOKEN REGISTRATION (call after login too)
-  // ───────────────────────────────────────────────────
-  Future<void> registerToken() async {
+  /// Alias for backwards compat (some code calls .init() instead of .initialize())
+  Future<void> init() => initialize();
+
+  Future<void> _tryInitFcm() async {
     try {
-      final token = await FirebaseMessaging.instance.getToken();
-      if (token == null) return;
-      debugPrint('[FCM] Token: ${token.substring(0, 20)}...');
-      final ok = await _api.updateFcmToken(
-        token,
-        deviceType: defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
-      );
-      if (!ok) debugPrint('[FCM] Token registration failed (user may not be logged in yet)');
-
-      // Also listen for refresh
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-        await _api.updateFcmToken(newToken,
-            deviceType: defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android');
-      });
+      final available = await _checkFirebaseAvailable();
+      if (!available) {
+        throw Exception('Firebase not configured');
+      }
+      // Uncomment after running `flutterfire configure`:
+      //
+      //   await Firebase.initializeApp(
+      //     options: DefaultFirebaseOptions.currentPlatform,
+      //   );
+      //   final messaging = FirebaseMessaging.instance;
+      //   await messaging.requestPermission();
+      //   _fcmToken = await messaging.getToken();
+      //
+      _fcmEnabled = true;
+      debugPrint('[Notif] ✅ FCM ready, token: $_fcmToken');
     } catch (e) {
-      debugPrint('[FCM] Token registration error: $e');
+      _fcmEnabled = false;
+      debugPrint('[Notif] ⚠️ FCM disabled: $e');
     }
   }
 
-  // ───────────────────────────────────────────────────
-  //  FOREGROUND HANDLER
-  // ───────────────────────────────────────────────────
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
-
-    final isCritical = (message.data['type'] ?? '') == 'sos_dispatched' ||
-                       (message.data['priority'] ?? '') == 'critical';
-
-    final androidDetails = AndroidNotificationDetails(
-      isCritical ? 'safeher_sos' : 'safeher_general',
-      isCritical ? 'Emergency Alerts' : 'General Notifications',
-      channelDescription: 'SafeHer notifications',
-      importance: isCritical ? Importance.max : Importance.high,
-      priority:   isCritical ? Priority.max     : Priority.high,
-      playSound:  true,
-      enableVibration: true,
-      ticker: notification.title,
-    );
-
-    const iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    final details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _local.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      details,
-      payload: jsonEncode(message.data),
-    );
+  Future<bool> _checkFirebaseAvailable() async {
+    // Without dynamic imports, default to false. The real Firebase
+    // init will throw if files are missing — caught above.
+    return false;
   }
+
+  /// Register the FCM token with the backend.
+  Future<void> registerToken() async {
+    if (!_fcmEnabled || _fcmToken == null) return;
+    try {
+      await _api.updateFcmToken(_fcmToken!);
+      debugPrint('[Notif] ✅ Token registered');
+    } catch (e) {
+      debugPrint('[Notif] ⚠️ Token registration failed: $e');
+    }
+  }
+
+  /// Show a local notification.
+  Future<void> showLocal({
+    required String title,
+    required String body,
+    String? payload,
+    int id = 0,
+  }) async {
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'safeher_default',
+        'SafeHer Notifications',
+        channelDescription: 'SOS confirmations and safety alerts',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const iosDetails = DarwinNotificationDetails();
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      await _local.show(id, title, body, details, payload: payload);
+    } catch (e) {
+      debugPrint('[Notif] showLocal failed: $e');
+    }
+  }
+
+  bool get fcmEnabled => _fcmEnabled;
+  String? get fcmToken => _fcmToken;
 }

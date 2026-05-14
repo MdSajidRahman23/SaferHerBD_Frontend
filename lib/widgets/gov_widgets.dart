@@ -11,7 +11,7 @@ class SafeHerLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mainColor = light ? Colors.white : AppColors.g;
-    final subColor  = light ? Colors.white.withOpacity(0.65) : AppColors.t3;
+    final subColor  = light ? Colors.white.withValues(alpha: 0.65) : AppColors.t3;
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Container(
         width: size, height: size,
@@ -19,11 +19,11 @@ class SafeHerLogo extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft, end: Alignment.bottomRight,
             colors: light
-              ? [Colors.white.withOpacity(0.25), Colors.white.withOpacity(0.1)]
+              ? [Colors.white.withValues(alpha: 0.25), Colors.white.withValues(alpha: 0.1)]
               : [AppColors.gl, AppColors.gd],
           ),
           borderRadius: BorderRadius.circular(size * 0.25),
-          border: light ? Border.all(color: Colors.white.withOpacity(0.3)) : null,
+          border: light ? Border.all(color: Colors.white.withValues(alpha: 0.3)) : null,
         ),
         child: Center(child: Icon(Icons.shield_rounded,
             color: light ? Colors.white : AppColors.gold, size: size * 0.55)),
@@ -67,10 +67,10 @@ class HeroHeader extends StatelessWidget {
       child: Stack(children: [
         Positioned(top: -60, right: -60, child: Container(width: 200, height: 200,
           decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.04)))),
+              color: Colors.white.withValues(alpha: 0.04)))),
         Positioned(bottom: -40, left: -40, child: Container(width: 120, height: 120,
           decoration: BoxDecoration(shape: BoxShape.circle,
-              color: Colors.white.withOpacity(0.03)))),
+              color: Colors.white.withValues(alpha: 0.03)))),
         SafeArea(bottom: false, child: Padding(
           padding: const EdgeInsets.fromLTRB(22, 12, 22, 22),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -86,7 +86,7 @@ class HeroHeader extends StatelessWidget {
             if (subtitle != null) ...[
               const SizedBox(height: 2),
               Text(subtitle!, style: GoogleFonts.hindSiliguri(
-                  color: Colors.white.withOpacity(0.75), fontSize: 13)),
+                  color: Colors.white.withValues(alpha: 0.75), fontSize: 13)),
             ],
             if (children != null) ...children!,
           ]),
@@ -153,9 +153,9 @@ class StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: light ? Colors.white.withOpacity(0.15) : color.withOpacity(0.1),
+        color: light ? Colors.white.withValues(alpha: 0.15) : color.withValues(alpha: 0.1),
         border: Border.all(
-            color: light ? Colors.white.withOpacity(0.25) : color.withOpacity(0.25)),
+            color: light ? Colors.white.withValues(alpha: 0.25) : color.withValues(alpha: 0.25)),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -184,9 +184,9 @@ class GovFooter extends StatelessWidget {
       child: Column(children: [
         Container(width: 44, height: 44,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.g.withOpacity(0.3), width: 1.5),
+            border: Border.all(color: AppColors.g.withValues(alpha: 0.3), width: 1.5),
             shape: BoxShape.circle),
-          child: Icon(Icons.verified_rounded, color: AppColors.g, size: 24)),
+          child: const Icon(Icons.verified_rounded, color: AppColors.g, size: 24)),
         const SizedBox(height: 6),
         Text('Government of Bangladesh',
             style: GoogleFonts.dmSans(color: AppColors.t2, fontSize: 11,

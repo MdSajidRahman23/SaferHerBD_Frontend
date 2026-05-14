@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
+import '../contacts/emergency_contacts_screen.dart';
 import '../../utils/constants.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onBack;
+  const ProfileScreen({super.key, this.onBack});
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
@@ -35,6 +37,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+
+  Future<void> _openEmergencyContacts() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EmergencyContactsScreen()),
+    );
+    if (mounted) {
+      await _load();
+    }
+  }
+
+  Future<void> _openSosHistory() async {
+    await Navigator.pushNamed(context, '/sos-history');
+    if (mounted) {
+      await _load();
+    }
+  }
+
   Future<void> _editName() async {
     final ctrl = TextEditingController(text: _user?['name']?.toString() ?? '');
     final result = await showDialog<String>(
@@ -52,10 +72,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
-    if (result != null && result.isNotEmpty && mounted) {
-      final ok = await _api.updateProfile({'name': result});
-      _toast(ok ? 'Name updated' : 'Update failed', error: !ok);
-      if (ok) _load();
+    if (result != null && result.trim().isNotEmpty && mounted) {
+      final res = await _api.updateProfileDetailed({'name': result.trim()});
+      final ok = res['success'] == true;
+      _toast(res['message']?.toString() ?? (ok ? 'Name updated' : 'Update failed'), error: !ok);
+      if (ok) {
+        final updatedUser = res['user'];
+        if (updatedUser is Map<String, dynamic>) {
+          setState(() => _user = updatedUser);
+        }
+        await _load();
+      }
     }
   }
 
@@ -157,7 +184,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.ink),
-          onPressed: () => Navigator.pop(context),
+          onPressed: widget.onBack ?? () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
         ),
         title: Text('Profile',
             style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 17)),
@@ -241,15 +272,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final contacts = _user?['contacts_count'] ?? 0;
     final sosCount = _user?['sos_count'] ?? 0;
     return Row(children: [
-      Expanded(child: _StatCard(label: 'Contacts', value: '$contacts', icon: Icons.people_outline)),
+      Expanded(
+        child: _StatCard(
+          label: 'Contacts',
+          value: '$contacts',
+          icon: Icons.people_outline,
+          onTap: _openEmergencyContacts,
+          helperText: 'Open',
+        ),
+      ),
       const SizedBox(width: 10),
-      Expanded(child: _StatCard(label: 'SOS Alerts', value: '$sosCount', icon: Icons.shield_outlined)),
+      Expanded(
+        child: _StatCard(
+          label: 'SOS Alerts',
+          value: '$sosCount',
+          icon: Icons.shield_outlined,
+          onTap: _openSosHistory,
+          helperText: 'View',
+        ),
+      ),
       const SizedBox(width: 10),
-      Expanded(child: _StatCard(
-        label: 'Language',
-        value: (_user?['preferred_language'] ?? 'en').toString().toUpperCase(),
-        icon: Icons.translate,
-      )),
+      Expanded(
+        child: _StatCard(
+          label: 'Language',
+          value: (_user?['preferred_language'] ?? 'en').toString().toUpperCase(),
+          icon: Icons.translate,
+        ),
+      ),
     ]);
   }
 
@@ -288,24 +337,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _StatCard extends StatelessWidget {
   final String label, value;
   final IconData icon;
-  const _StatCard({required this.label, required this.value, required this.icon});
+  final VoidCallback? onTap;
+  final String? helperText;
+
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.onTap,
+    this.helperText,
+  });
+
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  Widget build(BuildContext context) {
+    final card = Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
           Icon(icon, color: AppColors.green, size: 18),
-          const SizedBox(height: 6),
-          Text(value,
-              style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w800, fontSize: 17)),
-          const SizedBox(height: 2),
-          Text(label, style: GoogleFonts.inter(color: AppColors.ink3, fontSize: 11)),
+          const Spacer(),
+          if (onTap != null)
+            const Icon(Icons.chevron_right, color: AppColors.ink3, size: 16),
         ]),
-      );
+        const SizedBox(height: 6),
+        Text(value,
+            style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w800, fontSize: 17)),
+        const SizedBox(height: 2),
+        Text(label, style: GoogleFonts.inter(color: AppColors.ink3, fontSize: 11)),
+        if (helperText != null) ...[
+          const SizedBox(height: 4),
+          Text(helperText!,
+              style: GoogleFonts.inter(
+                color: AppColors.green,
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+              )),
+        ],
+      ]),
+    );
+
+    if (onTap == null) return card;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: card,
+      ),
+    );
+  }
 }
 
 class _Tile extends StatelessWidget {

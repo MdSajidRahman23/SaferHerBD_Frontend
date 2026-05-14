@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:google_fonts/google_fonts.dart';
 import '../utils/constants.dart';
-import '../utils/app_theme.dart';
 
 // ── Topo background pattern (subtle wavy lines + circles) ────────
 class TopoBackground extends StatelessWidget {
@@ -32,14 +31,14 @@ class _TopoPainter extends CustomPainter {
     final radial = Paint()
       ..shader = RadialGradient(
         radius: 0.7,
-        colors: [AppColors.green.withOpacity(0.05), Colors.transparent],
+        colors: [AppColors.green.withValues(alpha: 0.05), Colors.transparent],
       ).createShader(Rect.fromCircle(
           center: Offset(size.width * 0.2, size.height * 0.1),
           radius: size.width * 0.6));
     canvas.drawRect(Offset.zero & size, radial);
 
     final paint = Paint()
-      ..color = AppColors.green.withOpacity(0.05)
+      ..color = AppColors.green.withValues(alpha: 0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
@@ -189,10 +188,10 @@ class IconBtn extends StatelessWidget {
             height: size,
             decoration: BoxDecoration(
               color: bg ??
-                  (dark ? Colors.white.withOpacity(0.1) : AppColors.card),
+                  (dark ? Colors.white.withValues(alpha: 0.1) : AppColors.card),
               borderRadius: radius ?? BorderRadius.circular(12),
               border: dark
-                  ? Border.all(color: Colors.white.withOpacity(0.08))
+                  ? Border.all(color: Colors.white.withValues(alpha: 0.08))
                   : Border.all(color: AppColors.line),
             ),
             child: Icon(icon,
@@ -277,11 +276,11 @@ class BottomNavBar extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(
           12, 8, 12, 8 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
-        color: dark ? Colors.black.withOpacity(0.55) : AppColors.card,
+        color: dark ? Colors.black.withValues(alpha: 0.55) : AppColors.card,
         border: Border(
           top: BorderSide(
               color:
-                  dark ? Colors.white.withOpacity(0.08) : AppColors.line),
+                  dark ? Colors.white.withValues(alpha: 0.08) : AppColors.line),
         ),
       ),
       child: Row(
@@ -289,7 +288,7 @@ class BottomNavBar extends StatelessWidget {
           final on = active == it.k;
           final color = on
               ? AppColors.green
-              : (dark ? Colors.white.withOpacity(0.6) : AppColors.ink3);
+              : (dark ? Colors.white.withValues(alpha: 0.6) : AppColors.ink3);
           return Expanded(
             child: GestureDetector(
               onTap: () => onNav(it.k),
@@ -420,7 +419,7 @@ class TrustBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         constraints: const BoxConstraints(minWidth: 76),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.8),
+          color: Colors.white.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.line),
         ),
@@ -467,10 +466,10 @@ class _GaugePainter extends CustomPainter {
         math.pi, math.pi, false, bgPaint);
 
     // Foreground gradient arc
-    final shader = SweepGradient(
+    final shader = const SweepGradient(
       startAngle: math.pi,
       endAngle: 2 * math.pi,
-      colors: const [AppColors.red, AppColors.amber, AppColors.green],
+      colors: [AppColors.red, AppColors.amber, AppColors.green],
     ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r));
     final fgPaint = Paint()
       ..shader = shader
@@ -586,7 +585,7 @@ class _PulseRingState extends State<PulseRing>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: widget.color.withOpacity(opacity),
+                color: widget.color.withValues(alpha: opacity),
                 width: 2,
               ),
             ),

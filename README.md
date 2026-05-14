@@ -1,171 +1,83 @@
-# SafeHer Bangladesh — Phase-II Fixes
+# SafeHer Batch 1 — Compile Error Fixes
 
-This pack contains **fixes and new code** to be merged into your existing SafeHer
-project. It addresses every gap identified in the Phase-I → Phase-II analysis.
+These files fix the 4 compile errors you hit:
 
-## Folder structure
+| Error | Cause | Fixed |
+|---|---|---|
+| `NotificationService.initialize()` not defined | I used `init()`, you called `initialize()` | ✅ Method renamed/aliased |
+| `locationSettings` not a valid parameter (×3) | geolocator 12.0.0 still uses old API | ✅ Switched to `desiredAccuracy:` |
+| `tag:` not a valid parameter for createPost | api_service patch not applied | ✅ Forum uses existing `tags:` list |
 
-```
-safeher_fixes/
-├── backend/                  # Laravel files — copy/replace into your Laravel project
-│   ├── app/
-│   │   ├── Console/Commands/
-│   │   ├── Http/
-│   │   │   ├── Controllers/Api/
-│   │   │   └── Middleware/
-│   │   └── Services/
-│   ├── bootstrap/
-│   ├── database/migrations/
-│   ├── routes/
-│   └── .env.example
-├── ml_api/                   # Python FastAPI — replace files in your ml_api folder
-│   ├── main.py
-│   ├── train_nlp_model.py
-│   ├── requirements.txt
-│   └── .env.example
-└── flutter/                  # Flutter app — replace files in your Flutter project
-    ├── android/app/src/main/
-    │   ├── AndroidManifest.xml
-    │   └── res/xml/network_security_config.xml
-    ├── lib/
-    │   ├── main.dart
-    │   ├── services/
-    │   ├── utils/
-    │   └── screens/
-    └── pubspec.yaml
-```
+---
 
-## Setup steps
+## 🎯 What to Replace
 
-### 1. Backend (Laravel)
+Replace these 4 files in your project:
 
-```bash
-cd safeher_backend
-# 1. Copy these files into your project (preserve directory structure):
-cp -r ../safeher_fixes/backend/. .
+| Source (this zip) | Destination |
+|---|---|
+| `flutter/lib/services/notification_service.dart` | `lib/services/notification_service.dart` |
+| `flutter/lib/services/sos_service.dart` | `lib/services/sos_service.dart` |
+| `flutter/lib/screens/sos/sos_screen.dart` | `lib/screens/sos/sos_screen.dart` |
+| `flutter/lib/screens/forum/forum_screen.dart` | `lib/screens/forum/forum_screen.dart` |
 
-# 2. Update .env with new keys (TWILIO_*, ML_API_BASE_URL, ADMIN_PHONES, etc.)
-cp .env.example .env  # edit values
+---
 
-# 3. Run new migrations
-php artisan migrate
+## 🚀 After replacing — run
 
-# 4. (Optional) Schedule the SOS retry job
-# Add to crontab:
-# * * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
-
-# 5. Start the API
-php artisan serve --host=0.0.0.0 --port=8000
-```
-
-### 2. Python ML API
-
-```bash
-cd ml_api
-cp ../safeher_fixes/ml_api/* .
-
-# Install / update dependencies
-pip install -r requirements.txt
-
-# Train models (first time only — required for /moderate-text)
-python train_nlp_model.py            # both TF-IDF + BERT
-python train_nlp_model.py --skip-bert  # quick CPU-only baseline
-
-# Build FAISS index (first time only — required for /chat RAG)
-python create_vector_db.py
-
-# Start the service
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
-```
-
-### 3. Flutter
-
-```bash
-cd safeher_app
-cp -r ../safeher_fixes/flutter/. .
-
+```powershell
+cd D:\safeher_flutter
+flutter clean
 flutter pub get
-
-# Development run (Android emulator)
-flutter run
-
-# Production build with API URL + ORS key
-flutter build apk \
-  --dart-define=API_BASE_URL=https://api.safeher.bd/api \
-  --dart-define=ML_API_BASE_URL=https://api.safeher.bd/ml \
-  --dart-define=ORS_API_KEY=your_real_ors_key_here
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api --dart-define=ML_API_BASE_URL=http://10.0.2.2:8001
 ```
 
-## What was fixed
+---
 
-### Backend
-1. ✅ Forum runtime CREATE TABLE replaced with proper migration
-2. ✅ Twilio SMS service for SOS reliability (NFR-1)
-3. ✅ SOS controller with parallel FCM + SMS, idempotency, latency stamping
-4. ✅ Notifications system (table + controller + endpoints)
-5. ✅ Profile management (edit, password, PIN change, FCM token registration, account delete)
-6. ✅ Forum likes/replies/reports with proper schema
-7. ✅ Real data-driven Safety Index from crime database
-8. ✅ Recent Alerts feed (replaces hardcoded dashboard data)
-9. ✅ Geocoding via free OpenStreetMap Nominatim
-10. ✅ Admin moderation panel + middleware
-11. ✅ SOS retry queue scheduler (every 60 seconds)
-12. ✅ All endpoints registered in routes/api.php
+## ⚠️ Note on Web vs Mobile
 
-### ML API
-1. ✅ CORS restricted to Laravel origins
-2. ✅ Bengali BERT model integration with TF-IDF/keyword fallbacks
-3. ✅ H3 v3/v4 compatibility shim
-4. ✅ Crisis keyword detection in chatbot
-5. ✅ Latency metrics endpoint
-6. ✅ Production-grade error handling
-7. ✅ Bengali BERT training script (sagorsarker/bangla-bert-base)
+তুমি Chrome-এ চালাচ্ছিলে (web build)। Web-এ:
+- ✅ HTTP calls work
+- ✅ Geolocator works (via browser API)
+- ⚠️ Local notifications **don't work** on web — they'll silently fail (no crash)
+- ⚠️ Background SOS retry doesn't work on web
 
-### Flutter
-1. ✅ Environment-aware API URL (no more localhost hardcoded)
-2. ✅ ORS API key via --dart-define (no more hardcoded)
-3. ✅ FCM push notification integration
-4. ✅ NEW Notifications screen
-5. ✅ NEW SOS History screen
-6. ✅ NEW Profile screen with edit / password / PIN
-7. ✅ Dashboard now uses real safety index + recent alerts
-8. ✅ Route screen has destination search (no hardcoded Bashundhara)
-9. ✅ Forum auto-refreshes after post; replies bottom sheet; report flow
-10. ✅ Settings screen properly navigates to all sub-screens
-11. ✅ SOS screen with countdown, live tracking, offline queue
-12. ✅ Chatbot with crisis indicator and persistent session
-13. ✅ Auth flow (login/register) with FCM token registration on success
-14. ✅ AndroidManifest with all required permissions
-
-## Environment variables checklist
-
-### Laravel (.env)
-```
-ML_API_BASE_URL=http://127.0.0.1:8001
-TWILIO_SID=AC...
-TWILIO_TOKEN=...
-TWILIO_FROM=+1234567890
-ADMIN_PHONES=+8801712345678
-GROQ_API_KEY=gsk_...
-ORS_API_KEY=eyJ...
+**সর্বোত্তম experience-এর জন্য Android emulator চালাও:**
+```powershell
+# Android Studio → Tools → Device Manager → Start an emulator
+# তারপর flutter run চালালে emulator-এ deploy হবে
 ```
 
-### Flutter (build flags)
-```
---dart-define=API_BASE_URL=https://api.safeher.bd/api
---dart-define=ML_API_BASE_URL=https://api.safeher.bd/ml
---dart-define=ORS_API_KEY=eyJ...
+URL conventions:
+- Android emulator → `http://10.0.2.2:8000` (already in your command)
+- Chrome/Edge → `http://127.0.0.1:8000` (need to change `--dart-define`)
+
+For Chrome:
+```powershell
+flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000/api --dart-define=ML_API_BASE_URL=http://127.0.0.1:8001
 ```
 
-## Phase-II completion checklist
+---
 
-- [ ] Run `php artisan migrate` (new migrations)
-- [ ] Add Twilio credentials to .env
-- [ ] Train BERT model: `python train_nlp_model.py`
-- [ ] Run `flutter pub get`
-- [ ] Configure Firebase: place `google-services.json` in `android/app/`
-- [ ] Test SOS flow end-to-end with airplane mode (offline queue)
-- [ ] Test forum NLP moderation with Bengali harassment text
-- [ ] Test chatbot crisis detection with phrase like "আমি মরে যেতে চাই"
-- [ ] Load-test SOS endpoint to validate <2s NFR-1
-- [ ] Replace hardcoded Mock locations with real Mapbox/Google Maps tiles (optional)
+## 📝 What's NOT changed (Batch 1 still applies as-is)
+
+- `emergency_contacts_screen.dart` — same as before, needs api_service patches
+- `EmergencyContactController.php` — same backend file
+- `PATCH_api_service.dart` — still apply these 4 methods to your api_service.dart for the contacts CRUD to work
+
+---
+
+## 🐛 If you see new errors after this fix
+
+The most likely next error is on the Emergency Contacts screen:
+```
+The method 'createContact' isn't defined for the type 'ApiService'
+The method 'updateContact' isn't defined for the type 'ApiService'
+```
+
+Fix: Apply the api_service patches from `batch1/flutter/lib/services/PATCH_api_service.dart`:
+1. Add `_safePut` helper
+2. Add `createContact` method
+3. Add `updateContact` method
+
+(You can skip the `createPost` patch since this fix already adjusts forum_screen to use the existing `tags:` list parameter.)

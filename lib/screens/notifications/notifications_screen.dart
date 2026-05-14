@@ -113,7 +113,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           const SizedBox(height: 120),
           Center(
             child: Column(children: [
-              Icon(Icons.notifications_off_outlined, size: 64, color: AppColors.ink3.withOpacity(0.5)),
+              Icon(Icons.notifications_off_outlined, size: 64, color: AppColors.ink3.withValues(alpha: 0.5)),
               const SizedBox(height: 12),
               Text('No notifications yet',
                   style: GoogleFonts.inter(
@@ -156,17 +156,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isUnread ? AppColors.greenSoft.withOpacity(0.4) : Colors.white,
+            color: isUnread ? AppColors.greenSoft.withValues(alpha: 0.4) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isUnread ? AppColors.green.withOpacity(0.25) : AppColors.line,
+              color: isUnread ? AppColors.green.withValues(alpha: 0.25) : AppColors.line,
             ),
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
               width: 36, height: 36,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(iconData, color: iconColor, size: 18),

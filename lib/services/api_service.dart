@@ -77,10 +77,53 @@ class ApiService {
 
   Map<String, dynamic>? _parseJson(http.Response res) {
     try {
-      return jsonDecode(res.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(res.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return {'data': decoded};
     } catch (_) {
       return null;
     }
+  }
+
+
+  List<dynamic> _extractList(Map<String, dynamic> body, List<String> keys) {
+    for (final key in keys) {
+      final value = body[key];
+      if (value is List) return value;
+      if (value is Map<String, dynamic>) {
+        final nested = value['data'] ?? value['items'] ?? value['results'];
+        if (nested is List) return nested;
+      }
+    }
+    final data = body['data'];
+    if (data is List) return data;
+    if (data is Map<String, dynamic>) {
+      final nested = data['data'] ?? data['items'] ?? data['results'];
+      if (nested is List) return nested;
+    }
+    return [];
+  }
+
+  Map<String, dynamic>? _extractMap(Map<String, dynamic> body, List<String> keys) {
+    for (final key in keys) {
+      final value = body[key];
+      if (value is Map<String, dynamic>) return value;
+      if (value is Map) return Map<String, dynamic>.from(value);
+    }
+    final data = body['data'];
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return null;
+  }
+
+  String? _firstValidationError(Map<String, dynamic> body) {
+    final errors = body['errors'];
+    if (errors is Map && errors.isNotEmpty) {
+      final first = errors.values.first;
+      if (first is List && first.isNotEmpty) return first.first.toString();
+      return first.toString();
+    }
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -89,13 +132,38 @@ class ApiService {
   Future<Map<String, dynamic>?> getProfile() async {
     final res = await _safeGet(ApiConfig.profile);
     final body = _parseJson(res);
-    if (res.statusCode == 200 && body != null) return body['user'] as Map<String, dynamic>?;
+    if (res.statusCode == 200 && body != null) {
+      return _extractMap(body, ['user', 'data']) ?? body;
+    }
     return null;
   }
 
-  Future<bool> updateProfile(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updateProfileDetailed(Map<String, dynamic> data) async {
     final res = await _safePut(ApiConfig.profile, data);
-    return res.statusCode == 200;
+    final body = _parseJson(res) ?? {};
+
+    if (res.statusCode == 200 && body['success'] != false) {
+      final user = _extractMap(body, ['user', 'data']);
+      if (user != null) {
+        // Keep the locally cached /api/user data fresh after profile edits.
+        await _auth.refreshUser();
+      }
+      return {
+        'success': true,
+        'message': body['message']?.toString() ?? 'Profile updated',
+        'user': user,
+      };
+    }
+
+    return {
+      'success': false,
+      'message': body['message']?.toString() ?? _firstValidationError(body) ?? 'Update failed',
+    };
+  }
+
+  Future<bool> updateProfile(Map<String, dynamic> data) async {
+    final result = await updateProfileDetailed(data);
+    return result['success'] == true;
   }
 
   Future<Map<String, dynamic>> changePassword({
@@ -136,7 +204,7 @@ class ApiService {
     final res = await _safeGet(ApiConfig.safetyIndex, auth: false);
     final body = _parseJson(res) ?? {};
     if (res.statusCode == 200) {
-      return (body['data'] ?? body['cities'] ?? []) as List<dynamic>;
+      return _extractList(body, ['cities', 'data']);
     }
     return [];
   }
@@ -145,7 +213,7 @@ class ApiService {
     final res = await _safeGet('${ApiConfig.safetyIndex}/$city', auth: false);
     final body = _parseJson(res);
     if (res.statusCode == 200 && body != null) {
-      return body['city'] as Map<String, dynamic>?;
+      return _extractMap(body, ['city', 'data']);
     }
     return null;
   }
@@ -170,7 +238,7 @@ class ApiService {
     final uri = Uri.parse(ApiConfig.recentAlerts).replace(queryParameters: params);
     final res = await _safeGet(uri.toString(), auth: false);
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['alerts'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['alerts', 'data']);
     return [];
   }
 
@@ -184,7 +252,7 @@ class ApiService {
     });
     final res = await _safeGet(uri.toString(), auth: false, timeout: const Duration(seconds: 10));
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['results'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['results', 'data']);
     return [];
   }
 
@@ -196,7 +264,7 @@ class ApiService {
     final res = await _safeGet(uri.toString(), auth: false);
     final body = _parseJson(res);
     if (res.statusCode == 200 && body != null) {
-      return body['data'] as Map<String, dynamic>?;
+      return _extractMap(body, ['data', 'result', 'address']) ?? body;
     }
     return null;
   }
@@ -207,7 +275,7 @@ class ApiService {
   Future<List<dynamic>> getContacts() async {
     final res = await _safeGet(ApiConfig.contacts);
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['contacts'] ?? body['data'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['contacts', 'data']);
     return [];
   }
 
@@ -229,9 +297,56 @@ class ApiService {
     return body;
   }
 
-  Future<bool> updateContact(String id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> createContactResult(Map<String, dynamic> data) async {
+    final res = await _safePost(ApiConfig.contacts, {
+      'name': data['name'],
+      'phone': data['phone'],
+      'relation': data['relation'] ?? 'Contact',
+      'priority_order': data['priority_order'],
+      'notify_on_sos': data['notify_on_sos'] ?? true,
+      'notify_on_safe_arrival': data['notify_on_safe_arrival'] ?? false,
+    });
+    final body = _parseJson(res) ?? {};
+
+    if (res.statusCode == 200 || res.statusCode == 201) {
+      final contact = _extractMap(body, ['contact', 'data']) ?? body;
+      return {
+        'success': true,
+        'message': body['message']?.toString() ?? 'Contact saved',
+        'contact': contact,
+      };
+    }
+
+    return {
+      'success': false,
+      'message': body['message']?.toString() ?? _firstValidationError(body) ?? 'Could not save contact',
+    };
+  }
+
+  Future<Map<String, dynamic>?> createContact(Map<String, dynamic> data) async {
+    final result = await createContactResult(data);
+    return result['success'] == true ? result['contact'] as Map<String, dynamic>? : null;
+  }
+
+  Future<Map<String, dynamic>> updateContactResult(String id, Map<String, dynamic> data) async {
     final res = await _safePut('${ApiConfig.contacts}/$id', data);
-    return res.statusCode == 200;
+    final body = _parseJson(res) ?? {};
+    if (res.statusCode == 200) {
+      return {
+        'success': true,
+        'message': body['message']?.toString() ?? 'Contact updated',
+        'contact': _extractMap(body, ['contact', 'data']) ?? body,
+      };
+    }
+    return {
+      'success': false,
+      'message': body['message']?.toString() ?? _firstValidationError(body) ?? 'Could not update contact',
+    };
+  }
+
+  Future<bool> updateContact(String id, Map<String, dynamic> data) async {
+    final result = await updateContactResult(id, data);
+    return result['success'] == true;
   }
 
   Future<bool> deleteContact(String id) async {
@@ -281,7 +396,7 @@ class ApiService {
   Future<List<dynamic>> getSosHistory() async {
     final res = await _safeGet(ApiConfig.sosHistory);
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['alerts'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['alerts', 'data']);
     return [];
   }
 
@@ -305,14 +420,23 @@ class ApiService {
   Future<List<dynamic>> getForumPosts({int page = 1}) async {
     final res = await _safeGet('${ApiConfig.forumPosts}?page=$page');
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['posts'] ?? body['data'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['posts', 'data']);
     return [];
   }
 
-  Future<Map<String, dynamic>> createPost(String content, {List<String>? tags}) async {
+  Future<Map<String, dynamic>> createPost(
+    String content, {
+    String? tag,
+    List<String>? tags,
+  }) async {
+    final tagList = <String>[];
+    if (tag != null && tag.trim().isNotEmpty) tagList.add(tag.trim());
+    if (tags != null) tagList.addAll(tags.where((t) => t.trim().isNotEmpty));
+
     final res = await _safePost(ApiConfig.forumPosts, {
       'content_body': content,
-      if (tags != null && tags.isNotEmpty) 'tags_json': tags,
+      if (tag != null && tag.trim().isNotEmpty) 'tag': tag.trim(),
+      if (tagList.isNotEmpty) 'tags_json': tagList,
     });
     final body = _parseJson(res) ?? {};
     body['statusCode'] = res.statusCode;
@@ -343,7 +467,7 @@ class ApiService {
   Future<List<dynamic>> getReplies(String postId) async {
     final res = await _safeGet('${ApiConfig.forumPosts}/$postId/replies');
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['replies'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['replies', 'data']);
     return [];
   }
 
@@ -362,11 +486,14 @@ class ApiService {
     String? sessionId,
   }) async {
     final body = <String, dynamic>{'message': message};
-    if (sessionId != null) body['session_id'] = sessionId;
+    if (sessionId != null && sessionId.trim().isNotEmpty) {
+      body['session_id'] = sessionId.trim();
+    }
     final res = await _safePost(ApiConfig.chatbot, body, timeout: const Duration(seconds: 45));
-    final json = _parseJson(res);
-    if (res.statusCode == 200 && json != null) return json;
-    return null;
+    final json = _parseJson(res) ?? <String, dynamic>{};
+    json['statusCode'] = res.statusCode;
+    if (res.statusCode >= 200 && res.statusCode < 300) return json;
+    return json;
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -375,7 +502,7 @@ class ApiService {
   Future<List<dynamic>> getLegalResources() async {
     final res = await _safeGet(ApiConfig.legalResources, auth: false);
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['resources'] ?? body['data'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['resources', 'data']);
     return [];
   }
 
@@ -385,14 +512,14 @@ class ApiService {
   Future<List<dynamic>> getNotifications() async {
     final res = await _safeGet(ApiConfig.notifications);
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['notifications'] ?? []) as List<dynamic>;
+    if (res.statusCode == 200) return _extractList(body, ['notifications', 'data']);
     return [];
   }
 
   Future<int> getUnreadNotificationCount() async {
     final res = await _safeGet(ApiConfig.notificationsUnread);
     final body = _parseJson(res) ?? {};
-    if (res.statusCode == 200) return (body['unread_count'] as int?) ?? 0;
+    if (res.statusCode == 200) return (body['unread_count'] as num?)?.toInt() ?? 0;
     return 0;
   }
 

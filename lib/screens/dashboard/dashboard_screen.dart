@@ -67,7 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _pos = await Geolocator.getCurrentPosition().timeout(const Duration(seconds: 6));
       final addr = await _api.reverseGeocode(_pos!.latitude, _pos!.longitude);
       if (addr != null) {
-        final m = (addr['address'] ?? {}) as Map<String, dynamic>;
+        final m = _asMap(addr['address']);
         _areaName = (m['city'] ?? m['town'] ?? m['suburb'] ?? m['state_district'] ?? 'Dhaka').toString();
       }
       if (mounted) setState(() {});
@@ -81,7 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
     Map<String, dynamic>? match;
     for (final c in all) {
-      final m = c as Map<String, dynamic>;
+      final m = _asMap(c);
       final cityName = (m['city']?.toString().toLowerCase() ?? '');
       final area = _areaName.toLowerCase();
       if (cityName.contains(area) || area.contains(cityName) && cityName.isNotEmpty) {
@@ -90,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
     setState(() {
-      _city = match ?? (all.isNotEmpty ? all.first as Map<String, dynamic> : null);
+      _city = match ?? (all.isNotEmpty ? _asMap(all.first) : null);
       _safetyLoading = false;
     });
   }
@@ -112,6 +112,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final n = await _api.getUnreadNotificationCount();
     if (!mounted) return;
     setState(() => _unread = n);
+  }
+
+
+
+  int _asInt(dynamic value, {int fallback = 0}) {
+    if (value is num) return value.round();
+    if (value is String) return int.tryParse(value) ?? fallback;
+    return fallback;
+  }
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
   }
 
   @override
@@ -173,7 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildHeroCard() {
     if (_safetyLoading) return const _Skeleton(height: 130);
-    final score = (_city?['score'] ?? 0) as int;
+    final score = _asInt(_city?['score']);
     final level = (_city?['risk_level'] ?? 'caution').toString();
     final cityName = (_city?['city'] ?? _areaName).toString();
     final color = _scoreColor(score);
@@ -182,7 +196,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.95), color.withOpacity(0.75)],
+          colors: [color.withValues(alpha: 0.95), color.withValues(alpha: 0.75)],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(18),
@@ -231,7 +245,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             begin: Alignment.topLeft, end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: AppColors.red.withOpacity(0.4), blurRadius: 18, offset: const Offset(0, 6))],
+          boxShadow: [BoxShadow(color: AppColors.red.withValues(alpha: 0.4), blurRadius: 18, offset: const Offset(0, 6))],
         ),
         child: Column(children: [
           const Icon(Icons.shield, color: Colors.white, size: 36),
@@ -262,10 +276,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildSafetyMetrics() {
     if (_safetyLoading) return const _Skeleton(height: 120);
 
-    final sub = (_city?['sub_metrics'] ?? {}) as Map<String, dynamic>;
-    final street = (sub['street_safety'] ?? 0) as int;
-    final digital = (sub['digital_safety'] ?? 0) as int;
-    final pub = (sub['public_safety'] ?? 0) as int;
+    final sub = _asMap(_city?['sub_metrics']);
+    final street = _asInt(sub['street_safety']);
+    final digital = _asInt(sub['digital_safety']);
+    final pub = _asInt(sub['public_safety']);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -308,7 +322,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: AppColors.amber.withOpacity(0.15),
+              color: AppColors.amber.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text('${_alerts.length} active',
@@ -328,7 +342,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.inter(color: AppColors.ink3, fontSize: 12)),
           )
         else
-          ..._alerts.take(3).map((a) => _AlertRow(alert: a as Map<String, dynamic>)),
+          ..._alerts.take(3).whereType<Map>().map((a) => _AlertRow(alert: Map<String, dynamic>.from(a))),
       ]),
     );
   }
@@ -494,7 +508,7 @@ class _AlertRow extends StatelessWidget {
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
           child: Text(risk.toUpperCase(),
               style: GoogleFonts.inter(
                   color: color, fontWeight: FontWeight.w700, fontSize: 9, letterSpacing: 0.4)),
@@ -565,7 +579,7 @@ class _Skeleton extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.line.withOpacity(0.4),
+          color: AppColors.line.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(14),
         ),
       );

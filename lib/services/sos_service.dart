@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:battery_plus/battery_plus.dart' as bp;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
@@ -12,182 +10,300 @@ import 'package:uuid/uuid.dart';
 import '../utils/constants.dart';
 import 'auth_service.dart';
 
-/// SosService — orchestrates SOS triggering with offline-first guarantee.
+/// Result of an SOS dispatch operation.
+///
+/// **Two ways to read the result:**
+///   1. Object access (recommended): `result.success`, `result.wasOffline`
+///   2. Map access (legacy): `result['success']`, `result['offline']`
+class SosResult {
+  final bool success;
+  final bool wasOffline;
+  final String message;
+  final String messageBn;
+  final double? latencyMs;
+  final int notifiedContactsCount;
+  final int totalContacts;
+  final String? sosId;
+
+  SosResult({
+    required this.success,
+    required this.wasOffline,
+    required this.message,
+    required this.messageBn,
+    this.latencyMs,
+    this.notifiedContactsCount = 0,
+    this.totalContacts = 0,
+    this.sosId,
+  });
+
+  Map<String, dynamic> toMap() => {
+        'success': success,
+        'offline': wasOffline,
+        'queued_offline': wasOffline,
+        'message': message,
+        'message_bn': messageBn,
+        'latency_ms': latencyMs,
+        'notified_contacts_count': notifiedContactsCount,
+        'total_contacts': totalContacts,
+        'sos_id': sosId,
+      };
+
+  dynamic operator [](String key) => toMap()[key];
+  bool containsKey(String key) => toMap().containsKey(key);
+
+  @override
+  String toString() =>
+      'SosResult(success: $success, offline: $wasOffline, msg: $message)';
+}
+
 class SosService {
-  static const _kQueue = 'sh_sos_offline_queue';
-  static const _uuid = Uuid();
+  static final SosService _instance = SosService._internal();
+  factory SosService() => _instance;
+  SosService._internal();
 
+  static const _kQueueKey = 'offline_sos_queue';
   final _auth = AuthService();
-  StreamSubscription<List<ConnectivityResult>>? _connSub;
+  final _uuid = const Uuid();
+  StreamSubscription? _connectivitySub;
 
-  /// Initialize background sync
-  Future<void> startConnectivityWatcher() async {
-    final c = Connectivity();
-    _connSub?.cancel();
-    _connSub = c.onConnectivityChanged.listen((results) async {
-      if (results.any((r) => r != ConnectivityResult.none)) {
-        await syncOfflineQueue();
-      }
-    });
-  }
-
-  Future<void> stopConnectivityWatcher() async {
-    await _connSub?.cancel();
-    _connSub = null;
-  }
-
-  /// UPDATE: Added 'trigger' alias to match SosScreen's call
-  /// This solves the "method 'trigger' isn't defined" error
-  Future<Map<String, dynamic>> trigger({String triggerMethod = 'button', double? lat, double? lng}) async {
-    return await triggerSos(triggerMethod: triggerMethod);
-  }
-
-  /// Public trigger entrypoint.
-  Future<Map<String, dynamic>> triggerSos({String triggerMethod = 'button'}) async {
-    final pos = await _bestEffortPosition();
-    final battery = await _bestEffortBattery();
+  Future<SosResult> trigger({
+    double? lat,
+    double? lng,
+    String? triggerMethod,
+    String? method,
+  }) async {
+    final triggeredAt = DateTime.now();
     final id = _uuid.v4();
-    final now = DateTime.now().toUtc().toIso8601String();
+    final m = triggerMethod ?? method ?? 'button';
 
-    final payload = {
-      'id': id,
-      'latitude': pos?.latitude ?? 0.0,
-      'longitude': pos?.longitude ?? 0.0,
-      'trigger_method': triggerMethod,
-      'triggered_at': now,
-      if (battery != null) 'battery_level': battery,
-    };
+    double resolvedLat = lat ?? 23.8103;
+    double resolvedLng = lng ?? 90.4125;
 
-    // Try direct online dispatch first
-    final online = await _tryOnlineTrigger(payload);
-    if (online['success'] == true) {
-      return online;
+    if (lat == null || lng == null) {
+      try {
+        final pos = await _getPosition();
+        if (pos != null) {
+          resolvedLat = pos.latitude;
+          resolvedLng = pos.longitude;
+        }
+      } catch (_) {}
     }
 
-    // Fallback: enqueue for later
-    await _enqueue(payload);
-    return {
-      'success': true,
-      'offline': true,
-      'sos_id': id,
-      'message': 'Queued — will send when online.',
-    };
+    // Always try the server first. On web/Chrome, connectivity_plus can
+    // incorrectly report `none` while localhost is reachable; pre-checking it
+    // caused false QUEUED SOS states. We only queue when the HTTP request
+    // genuinely times out or the network call throws.
+    return await _triggerOnline(
+      id: id, lat: resolvedLat, lng: resolvedLng,
+      method: m, triggeredAt: triggeredAt,
+    );
   }
 
-  // ─── ONLINE TRIGGER ───────────────────────────────────────
-  Future<Map<String, dynamic>> _tryOnlineTrigger(Map<String, dynamic> payload) async {
+  // ════════════════════════════════════════════════════════════════
+  //  GET POSITION — geolocator 12.0.0 API (desiredAccuracy)
+  // ════════════════════════════════════════════════════════════════
+  Future<Position?> _getPosition() async {
     try {
-      final token = await _auth.getToken();
-      if (token == null) {
-        return {'success': false, 'reason': 'no_token'};
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
       }
+      if (perm != LocationPermission.always &&
+          perm != LocationPermission.whileInUse) {
+        return null;
+      }
+
+      // ✅ geolocator 12.0.0: use desiredAccuracy (not locationSettings)
+      // ignore: deprecated_member_use
+      return await Geolocator.getCurrentPosition(
+        // ignore: deprecated_member_use
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 6),
+      );
+    } catch (_) {
+      try {
+        return await Geolocator.getLastKnownPosition();
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  Future<SosResult> _triggerOnline({
+    required String id,
+    required double lat,
+    required double lng,
+    required String method,
+    required DateTime triggeredAt,
+  }) async {
+    final token = await _auth.getToken();
+    if (token == null) {
+      return SosResult(
+        success: false,
+        wasOffline: false,
+        message: 'Please log in first',
+        messageBn: 'প্রথমে লগইন করুন',
+      );
+    }
+
+    try {
       final res = await http.post(
         Uri.parse(ApiConfig.sosTrigger),
         headers: {
-          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(payload),
+        body: jsonEncode({
+          'id': id,
+          'latitude': lat,
+          'longitude': lng,
+          'trigger_method': method,
+          'triggered_at': triggeredAt.toUtc().toIso8601String(),
+        }),
       ).timeout(const Duration(seconds: 8));
 
-      if (res.statusCode == 202 || res.statusCode == 200) {
+      final latencyMs =
+          DateTime.now().difference(triggeredAt).inMilliseconds.toDouble();
+
+      if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 202) {
+        Map<String, dynamic> data = {};
         try {
-          return jsonDecode(res.body) as Map<String, dynamic>;
-        } catch (_) {
-          return {'success': true, 'sos_id': payload['id']};
-        }
+          data = jsonDecode(res.body) as Map<String, dynamic>;
+        } catch (_) {}
+
+        final notified = (data['notified_contacts_count'] as num?)?.toInt() ?? 0;
+        final total    = (data['total_contacts'] as num?)?.toInt() ?? 0;
+
+        return SosResult(
+          success: true,
+          wasOffline: false,
+          message: 'Alert sent. $notified of $total contacts notified.',
+          messageBn: notified > 0
+              ? 'সংকেত পাঠানো হয়েছে! $notified জনকে জানানো হয়েছে।'
+              : 'সংকেত পাঠানো হয়েছে! Emergency contact যোগ করুন।',
+          latencyMs: latencyMs,
+          notifiedContactsCount: notified,
+          totalContacts: total,
+          sosId: data['sos_id']?.toString() ?? id,
+        );
       }
-      return {'success': false, 'http': res.statusCode};
-    } on TimeoutException {
-      return {'success': false, 'reason': 'timeout'};
-    } on SocketException {
-      return {'success': false, 'reason': 'no_network'};
+
+      if (res.statusCode == 401) {
+        return SosResult(
+          success: false,
+          wasOffline: false,
+          message: 'Session expired. Please log in again.',
+          messageBn: 'সেশন শেষ — আবার লগইন করুন',
+        );
+      }
+
+      Map<String, dynamic> data = {};
+      try {
+        data = jsonDecode(res.body) as Map<String, dynamic>;
+      } catch (_) {}
+      return SosResult(
+        success: false,
+        wasOffline: false,
+        message: data['message']?.toString() ?? data['error']?.toString() ?? 'SOS server rejected the request.',
+        messageBn: data['message_bn']?.toString() ?? 'SOS পাঠানো যায়নি — backend log দেখুন।',
+        latencyMs: latencyMs,
+        sosId: id,
+      );
     } catch (_) {
-      return {'success': false, 'reason': 'unknown'};
+      return await _queueOffline(
+        id: id, lat: lat, lng: lng, method: method, triggeredAt: triggeredAt,
+      );
     }
   }
 
-  // ─── OFFLINE QUEUE ────────────────────────────────────────
-  Future<void> _enqueue(Map<String, dynamic> payload) async {
+  Future<SosResult> _queueOffline({
+    required String id,
+    required double lat,
+    required double lng,
+    required String method,
+    required DateTime triggeredAt,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_kQueue) ?? [];
-    list.add(jsonEncode(payload));
-    await prefs.setStringList(_kQueue, list);
+    final existing = prefs.getStringList(_kQueueKey) ?? [];
+    existing.add(jsonEncode({
+      'id': id,
+      'latitude': lat,
+      'longitude': lng,
+      'trigger_method': method,
+      'triggered_at': triggeredAt.toUtc().toIso8601String(),
+    }));
+    await prefs.setStringList(_kQueueKey, existing);
+    _watchConnectivity();
+
+    return SosResult(
+      success: true,
+      wasOffline: true,
+      message: 'Saved offline. Will send when connected.',
+      messageBn: 'নেটওয়ার্ক নেই — সংরক্ষিত হয়েছে। সংযোগ পেলেই পাঠানো হবে।',
+      sosId: id,
+    );
   }
 
-  Future<int> getQueueSize() async {
-    final prefs = await SharedPreferences.getInstance();
-    return (prefs.getStringList(_kQueue) ?? []).length;
-  }
-
-  Future<int> syncOfflineQueue() async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_kQueue) ?? [];
-    if (list.isEmpty) return 0;
-
+  Future<void> syncOfflineQueue() async {
     final token = await _auth.getToken();
-    if (token == null) return 0;
+    if (token == null) return;
 
-    final payloads = list.map((s) {
-      try { return jsonDecode(s); } catch (_) { return null; }
-    }).where((e) => e != null).toList();
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_kQueueKey) ?? [];
+    if (raw.isEmpty) return;
+
+    final payloads = raw
+        .map((r) {
+          try {
+            return jsonDecode(r) as Map<String, dynamic>;
+          } catch (_) {
+            return null;
+          }
+        })
+        .whereType<Map<String, dynamic>>()
+        .toList();
 
     if (payloads.isEmpty) {
-      await prefs.remove(_kQueue);
-      return 0;
+      await prefs.remove(_kQueueKey);
+      return;
     }
 
     try {
       final res = await http.post(
         Uri.parse(ApiConfig.sosSyncOffline),
         headers: {
-          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({'payloads': payloads}),
       ).timeout(const Duration(seconds: 15));
 
       if (res.statusCode == 200) {
-        await prefs.remove(_kQueue);
-        try {
-          final body = jsonDecode(res.body);
-          return (body['synced_count'] as int?) ?? payloads.length;
-        } catch (_) {
-          return payloads.length;
-        }
+        await prefs.remove(_kQueueKey);
       }
-    } catch (_) {/* will retry on next connectivity event */}
-
-    return 0;
+    } catch (_) {}
   }
 
-  // ─── HELPERS ──────────────────────────────────────────────
-  Future<Position?> _bestEffortPosition() async {
-    try {
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
+  void _watchConnectivity() {
+    _connectivitySub?.cancel();
+    _connectivitySub = Connectivity().onConnectivityChanged.listen((results) {
+      if (results.isNotEmpty && results.first != ConnectivityResult.none) {
+        syncOfflineQueue();
       }
-      if (perm == LocationPermission.deniedForever) return null;
-
-      // UPDATE: Fix for Geolocator 12.0.0+
-      // Using direct parameters instead of locationSettings to avoid mismatch
-      return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high, 
-      ).timeout(const Duration(seconds: 5));
-    } catch (_) {
-      return null;
-    }
+    });
   }
 
-  Future<int?> _bestEffortBattery() async {
-    try {
-      final battery = bp.Battery();
-      return await battery.batteryLevel.timeout(const Duration(seconds: 2));
-    } catch (_) {
-      return null;
-    }
+  Future<int> getPendingCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_kQueueKey) ?? []).length;
+  }
+
+  void dispose() {
+    _connectivitySub?.cancel();
   }
 }

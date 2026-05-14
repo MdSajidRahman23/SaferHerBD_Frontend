@@ -43,3 +43,29 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+
+# Local machine config
+android/local.properties
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
+# Generated / temporary project dumps
+repomix-output.xml
+*-output.xml
+*_output.xml
+
+# Patch/readme temp files from local fixes
+FRONTEND_P*_README.txt
+SAFEHERBD_P*_README.txt
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Firebase / private credentials
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+firebase-credentials.json

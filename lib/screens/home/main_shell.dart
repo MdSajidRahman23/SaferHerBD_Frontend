@@ -59,7 +59,7 @@ class _MainShellState extends State<MainShell> {
         body = SettingsScreen(onNav: _onNav, onBack: _goHome);
         break;
       case 'profile':
-        body = const ProfileScreen();
+        body = ProfileScreen(onBack: _goHome);
         break;
       default:
         body = DashboardScreen(onNav: _onNav);
