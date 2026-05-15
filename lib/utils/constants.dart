@@ -172,6 +172,9 @@ class ApiConfig {
   static String get sosSyncOffline   => '$baseUrl/sos/sync-offline';
   static String get sosHistory       => '$baseUrl/sos/history';
   static String sosTrack(String id)  => '$baseUrl/sos/$id/track';
+  static String sosResolve(String id) => '$baseUrl/sos/$id/resolve';
+  static String sosEscalate(String id) => '$baseUrl/sos/$id/escalate';
+  static String sosTimeline(String id) => '$baseUrl/sos/$id/timeline';
 
   // ─────── Contacts ───────
   static String get contacts         => '$baseUrl/emergency-contacts';
@@ -179,7 +182,17 @@ class ApiConfig {
   // ─────── Risk / Route ───────
   static String get riskPredict      => '$baseUrl/risk-engine/predict';
   static String get routeSafest      => '$baseUrl/route/safest';
+  static String get routeReports     => '$baseUrl/route/reports';
+  static String get routeReportsRecent => '$baseUrl/route/reports/recent';
   static String get safePlacesNearby => '$baseUrl/safe-places/nearby';
+
+  // ─────── Journey Safety Mode ───────
+  static String get journeyActive   => '$baseUrl/journey-safety/active';
+  static String get journeyHistory  => '$baseUrl/journey-safety/history';
+  static String get journeyStart    => '$baseUrl/journey-safety/start';
+  static String journeyCheckIn(String id) => '$baseUrl/journey-safety/$id/check-in';
+  static String journeyComplete(String id) => '$baseUrl/journey-safety/$id/complete';
+  static String journeyCancel(String id) => '$baseUrl/journey-safety/$id/cancel';
 
   // ─────── Forum ───────
   static String get forumPosts       => '$baseUrl/forum/posts';

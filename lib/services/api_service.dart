@@ -395,15 +395,152 @@ class ApiService {
     required double endLat,
     required double endLng,
     String travelMode = 'foot-walking',
+    String? routeProfile,
+    String? vehicleType,
+    String? modeLabel,
+    String? routePreference,
+    int? safeStopCount,
   }) async {
-    final res = await _safePost(ApiConfig.routeSafest, {
+    final payload = <String, dynamic>{
       'start': {'latitude': startLat, 'longitude': startLng},
-      'end':   {'latitude': endLat,   'longitude': endLng},
+      'end': {'latitude': endLat, 'longitude': endLng},
       'travel_mode': travelMode,
-    });
+      if (routeProfile != null && routeProfile.trim().isNotEmpty) 'route_profile': routeProfile.trim(),
+      if (vehicleType != null && vehicleType.trim().isNotEmpty) 'vehicle_type': vehicleType.trim(),
+      if (modeLabel != null && modeLabel.trim().isNotEmpty) 'mode_label': modeLabel.trim(),
+      if (routePreference != null && routePreference.trim().isNotEmpty) 'route_preference': routePreference.trim(),
+      if (safeStopCount != null) 'safe_stop_count': safeStopCount,
+    };
+
+    final res = await _safePost(ApiConfig.routeSafest, payload);
     final body = _parseJson(res);
     if (res.statusCode == 200 && body != null) return body;
     return null;
+  }
+
+  Future<Map<String, dynamic>> reportRouteIssue({
+    required String reportType,
+    required double latitude,
+    required double longitude,
+    String? severity,
+    String? note,
+    String? routeId,
+    String? travelMode,
+    String? routePreference,
+  }) async {
+    final res = await _safePost(ApiConfig.routeReports, {
+      'report_type': reportType,
+      'latitude': latitude,
+      'longitude': longitude,
+      if (severity != null && severity.trim().isNotEmpty) 'severity': severity.trim(),
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      if (routeId != null && routeId.trim().isNotEmpty) 'route_id': routeId.trim(),
+      if (travelMode != null && travelMode.trim().isNotEmpty) 'travel_mode': travelMode.trim(),
+      if (routePreference != null && routePreference.trim().isNotEmpty) 'route_preference': routePreference.trim(),
+    });
+    final body = _parseJson(res) ?? {};
+    body['statusCode'] = res.statusCode;
+    return {
+      'success': res.statusCode == 200 || res.statusCode == 201,
+      'message': body['message']?.toString() ?? (res.statusCode == 201 ? 'Report saved' : 'Could not save report'),
+      'data': body,
+    };
+  }
+
+
+  // ═══════════════════════════════════════════════════════════
+  //  JOURNEY SAFETY MODE
+  // ═══════════════════════════════════════════════════════════
+  Future<Map<String, dynamic>?> getActiveJourneySafety() async {
+    final res = await _safeGet(ApiConfig.journeyActive);
+    final body = _parseJson(res);
+    if (res.statusCode == 200 && body != null) {
+      return _extractMap(body, ['journey', 'data']);
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> startJourneySafety({
+    required double startLat,
+    required double startLng,
+    double? endLat,
+    double? endLng,
+    String? startLabel,
+    String? endLabel,
+    String? routeLabel,
+    String? travelMode,
+    String? routePreference,
+    int? safetyScore,
+    int? expectedDurationMin,
+    Map<String, dynamic>? metadata,
+  }) async {
+    final res = await _safePost(ApiConfig.journeyStart, {
+      'start_latitude': startLat,
+      'start_longitude': startLng,
+      if (endLat != null) 'end_latitude': endLat,
+      if (endLng != null) 'end_longitude': endLng,
+      if (startLabel != null && startLabel.trim().isNotEmpty) 'start_label': startLabel.trim(),
+      if (endLabel != null && endLabel.trim().isNotEmpty) 'end_label': endLabel.trim(),
+      if (routeLabel != null && routeLabel.trim().isNotEmpty) 'route_label': routeLabel.trim(),
+      if (travelMode != null && travelMode.trim().isNotEmpty) 'travel_mode': travelMode.trim(),
+      if (routePreference != null && routePreference.trim().isNotEmpty) 'route_preference': routePreference.trim(),
+      if (safetyScore != null) 'safety_score': safetyScore,
+      if (expectedDurationMin != null && expectedDurationMin > 0) 'expected_duration_min': expectedDurationMin,
+      if (metadata != null) 'metadata': metadata,
+    });
+    final body = _parseJson(res) ?? {};
+    return {
+      'success': res.statusCode >= 200 && res.statusCode < 300 && body['success'] != false,
+      'message': body['message']?.toString() ?? 'Journey safety response received',
+      'journey': _extractMap(body, ['journey', 'data']),
+      'statusCode': res.statusCode,
+    };
+  }
+
+  Future<Map<String, dynamic>> checkInJourneySafety({
+    required String journeyId,
+    String status = 'safe',
+    double? latitude,
+    double? longitude,
+    String? note,
+    int? batteryLevel,
+  }) async {
+    final res = await _safePost(ApiConfig.journeyCheckIn(journeyId), {
+      'status': status,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      if (batteryLevel != null) 'battery_level': batteryLevel,
+    });
+    final body = _parseJson(res) ?? {};
+    return {
+      'success': res.statusCode >= 200 && res.statusCode < 300 && body['success'] != false,
+      'message': body['message']?.toString() ?? 'Journey check-in saved',
+      'journey': _extractMap(body, ['journey', 'data']),
+      'statusCode': res.statusCode,
+    };
+  }
+
+  Future<Map<String, dynamic>> completeJourneySafety(String journeyId) async {
+    final res = await _safePost(ApiConfig.journeyComplete(journeyId), {});
+    final body = _parseJson(res) ?? {};
+    return {
+      'success': res.statusCode >= 200 && res.statusCode < 300 && body['success'] != false,
+      'message': body['message']?.toString() ?? 'Journey completed',
+      'journey': _extractMap(body, ['journey', 'data']),
+      'statusCode': res.statusCode,
+    };
+  }
+
+  Future<Map<String, dynamic>> cancelJourneySafety(String journeyId) async {
+    final res = await _safePost(ApiConfig.journeyCancel(journeyId), {});
+    final body = _parseJson(res) ?? {};
+    return {
+      'success': res.statusCode >= 200 && res.statusCode < 300 && body['success'] != false,
+      'message': body['message']?.toString() ?? 'Journey cancelled',
+      'journey': _extractMap(body, ['journey', 'data']),
+      'statusCode': res.statusCode,
+    };
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -428,6 +565,59 @@ class ApiService {
       if (speedKmh != null) 'speed_kmh': speedKmh,
     });
     return res.statusCode == 200;
+  }
+
+
+  Future<Map<String, dynamic>> resolveSos({
+    required String sosId,
+    String? note,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final res = await _safePost(ApiConfig.sosResolve(sosId), {
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+    });
+    final body = _parseJson(res) ?? {};
+    body['statusCode'] = res.statusCode;
+    return {
+      'success': res.statusCode >= 200 && res.statusCode < 300 && body['success'] != false,
+      'message': body['message']?.toString() ?? 'Safety check saved',
+      'data': body,
+    };
+  }
+
+  Future<Map<String, dynamic>> escalateSos({
+    required String sosId,
+    String? reason,
+    String? note,
+    int? level,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final res = await _safePost(ApiConfig.sosEscalate(sosId), {
+      if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      if (level != null) 'level': level,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+    });
+    final body = _parseJson(res) ?? {};
+    body['statusCode'] = res.statusCode;
+    return {
+      'success': res.statusCode >= 200 && res.statusCode < 300 && body['success'] != false,
+      'message': body['message']?.toString() ?? 'SOS escalation updated',
+      'data': body,
+      'recommended_actions': _extractList(body, ['recommended_actions', 'actions']),
+    };
+  }
+
+  Future<List<dynamic>> getSosTimeline(String sosId) async {
+    final res = await _safeGet(ApiConfig.sosTimeline(sosId));
+    final body = _parseJson(res) ?? {};
+    if (res.statusCode == 200) return _extractList(body, ['events', 'data']);
+    return [];
   }
 
   // ═══════════════════════════════════════════════════════════
