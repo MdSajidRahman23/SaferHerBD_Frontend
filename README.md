@@ -1,83 +1,119 @@
-# SafeHer Batch 1 — Compile Error Fixes
+# SafeHer Bangladesh Frontend — Final Run Guide
 
-These files fix the 4 compile errors you hit:
-
-| Error | Cause | Fixed |
-|---|---|---|
-| `NotificationService.initialize()` not defined | I used `init()`, you called `initialize()` | ✅ Method renamed/aliased |
-| `locationSettings` not a valid parameter (×3) | geolocator 12.0.0 still uses old API | ✅ Switched to `desiredAccuracy:` |
-| `tag:` not a valid parameter for createPost | api_service patch not applied | ✅ Forum uses existing `tags:` list |
+This repository contains the Flutter frontend for **SafeHer Bangladesh**, an AI-driven women safety and digital empowerment platform.
 
 ---
 
-## 🎯 What to Replace
-
-Replace these 4 files in your project:
-
-| Source (this zip) | Destination |
-|---|---|
-| `flutter/lib/services/notification_service.dart` | `lib/services/notification_service.dart` |
-| `flutter/lib/services/sos_service.dart` | `lib/services/sos_service.dart` |
-| `flutter/lib/screens/sos/sos_screen.dart` | `lib/screens/sos/sos_screen.dart` |
-| `flutter/lib/screens/forum/forum_screen.dart` | `lib/screens/forum/forum_screen.dart` |
-
----
-
-## 🚀 After replacing — run
+## 1. Local Path
 
 ```powershell
-cd D:\safeher_flutter
-flutter clean
+D:\safeher_flutter
+```
+
+The backend should be available at:
+
+```powershell
+D:\safeher-backend
+```
+
+---
+
+## 2. Main Modules
+
+| Module | Description |
+|---|---|
+| Dashboard | Safety index, risk breakdown, alerts, quick access |
+| Emergency SOS | SOS trigger, queued dispatch, ACK latency, escalation, helplines |
+| Mitra | Bengali/Banglish safety guidance chatbot |
+| Safe Route | Map, transport modes, route preference, nearby safe stops |
+| Sister Circle | Women-only community forum with masked identity |
+| Legal Aid | Legal resources, reporting guide, emergency helpline actions |
+| Notifications | Safety notifications and alert status |
+| Settings/Profile | User profile and emergency contact management |
+
+---
+
+## 3. Run Commands
+
+Start backend, queue worker, and ML API first. Then run:
+
+```powershell
+cd "D:\safeher_flutter"
 flutter pub get
+flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000/api --dart-define=ML_API_BASE_URL=http://127.0.0.1:8001
+```
+
+For Android emulator:
+
+```powershell
+cd "D:\safeher_flutter"
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api --dart-define=ML_API_BASE_URL=http://10.0.2.2:8001
 ```
 
 ---
 
-## ⚠️ Note on Web vs Mobile
+## 4. Verification
 
-তুমি Chrome-এ চালাচ্ছিলে (web build)। Web-এ:
-- ✅ HTTP calls work
-- ✅ Geolocator works (via browser API)
-- ⚠️ Local notifications **don't work** on web — they'll silently fail (no crash)
-- ⚠️ Background SOS retry doesn't work on web
-
-**সর্বোত্তম experience-এর জন্য Android emulator চালাও:**
 ```powershell
-# Android Studio → Tools → Device Manager → Start an emulator
-# তারপর flutter run চালালে emulator-এ deploy হবে
+cd "D:\safeher_flutter"
+flutter pub get
+flutter analyze
+flutter test
 ```
 
-URL conventions:
-- Android emulator → `http://10.0.2.2:8000` (already in your command)
-- Chrome/Edge → `http://127.0.0.1:8000` (need to change `--dart-define`)
+Expected:
 
-For Chrome:
-```powershell
-flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000/api --dart-define=ML_API_BASE_URL=http://127.0.0.1:8001
+```text
+No issues found
+All tests passed
 ```
+
+Package update warnings are acceptable if tests and analysis pass.
 
 ---
 
-## 📝 What's NOT changed (Batch 1 still applies as-is)
+## 5. Demo Screenshots to Capture
 
-- `emergency_contacts_screen.dart` — same as before, needs api_service patches
-- `EmergencyContactController.php` — same backend file
-- `PATCH_api_service.dart` — still apply these 4 methods to your api_service.dart for the contacts CRUD to work
+1. Login screen.
+2. Dashboard with Risk Breakdown.
+3. Emergency SOS queued screen with ACK latency.
+4. Mitra safety guidance response.
+5. Safe Route with safe stops.
+6. Sister Circle feed.
+7. Legal Aid reporting guide.
+8. Settings/Profile with emergency contact flow.
+9. Backend request logs.
+10. ML API health.
+11. Backend and Flutter test results.
 
 ---
 
-## 🐛 If you see new errors after this fix
+## 6. Web vs Android Notes
 
-The most likely next error is on the Emergency Contacts screen:
+Chrome/web is best for fast demo screenshots. Android emulator is better for mobile-specific permission testing.
+
+Web limitations:
+
+- Browser may request location permission.
+- Local notifications/background retry may not behave like Android.
+- Always verify SOS API response and queue worker output for reliability evidence.
+
+---
+
+## 7. Git Safety
+
+Do not commit:
+
+```text
+.env
+.env.*
+build/
+.dart_tool/
+coverage/
+_safeher_backups/
+_safeher_reports/
+_safeher_tools/
+*.backup_*
+Firebase private config files
 ```
-The method 'createContact' isn't defined for the type 'ApiService'
-The method 'updateContact' isn't defined for the type 'ApiService'
-```
 
-Fix: Apply the api_service patches from `batch1/flutter/lib/services/PATCH_api_service.dart`:
-1. Add `_safePut` helper
-2. Add `createContact` method
-3. Add `updateContact` method
-
-(You can skip the `createPost` patch since this fix already adjusts forum_screen to use the existing `tags:` list parameter.)

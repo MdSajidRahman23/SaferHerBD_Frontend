@@ -31,6 +31,11 @@ class _SosScreenState extends State<SosScreen> with TickerProviderStateMixin {
   bool _lastWasOffline = false;
   bool _lastSuccess = true;
   String? _lastSosId;
+  String _dispatchStatus = 'unknown';
+  int _notifiedContactsCount = 0;
+  int _totalContacts = 0;
+  int _fcmCount = 0;
+  int _smsCount = 0;
 
   int _safetyCheckSeconds = 60;
   bool _escalationLoading = false;
@@ -96,6 +101,11 @@ class _SosScreenState extends State<SosScreen> with TickerProviderStateMixin {
       _lastWasOffline = result.wasOffline;
       _lastSuccess = result.success;
       _lastSosId = result.sosId;
+      _dispatchStatus = result.dispatchStatus;
+      _notifiedContactsCount = result.notifiedContactsCount;
+      _totalContacts = result.totalContacts;
+      _fcmCount = result.fcmCount;
+      _smsCount = result.smsCount;
       _safetyResolved = false;
     });
 
@@ -388,7 +398,9 @@ class _SosScreenState extends State<SosScreen> with TickerProviderStateMixin {
           : _lastSuccess
               ? Icons.check_circle_rounded
               : Icons.error_rounded;
-      final label = _lastWasOffline ? 'QUEUED' : (_lastSuccess ? 'SENT' : 'FAILED');
+      final label = _lastWasOffline
+          ? 'QUEUED'
+          : (_lastSuccess ? (_dispatchStatus == 'queued' ? 'QUEUED' : 'SENT') : 'FAILED');
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -422,7 +434,9 @@ class _SosScreenState extends State<SosScreen> with TickerProviderStateMixin {
 
   Widget _buildSentCard() {
     final c = _lastWasOffline ? AppColors.gold : (_lastSuccess ? AppColors.g : AppColors.r);
-    final prefix = _lastWasOffline ? 'Queued offline' : (_lastSuccess ? 'Delivered to server' : 'Not sent');
+    final prefix = _lastWasOffline
+        ? 'Queued offline'
+        : (_lastSuccess ? (_dispatchStatus == 'queued' ? 'Received by server' : 'Delivered to server') : 'Not sent');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
       child: Container(
@@ -447,6 +461,17 @@ class _SosScreenState extends State<SosScreen> with TickerProviderStateMixin {
                 style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w600),
               ),
             ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _DeliveryChip(label: 'Dispatch', value: _dispatchStatus),
+                _DeliveryChip(label: 'Contacts', value: _totalContacts > 0 ? '$_notifiedContactsCount/$_totalContacts' : '0'),
+                _DeliveryChip(label: 'Push', value: '$_fcmCount'),
+                _DeliveryChip(label: 'SMS', value: '$_smsCount'),
+              ],
+            ),
           ],
         ),
       ),
@@ -550,6 +575,29 @@ class _SosScreenState extends State<SosScreen> with TickerProviderStateMixin {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+class _DeliveryChip extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DeliveryChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.70),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(
+        '$label: $value',
+        style: GoogleFonts.inter(color: AppColors.t2, fontWeight: FontWeight.w800, fontSize: 10.5),
       ),
     );
   }

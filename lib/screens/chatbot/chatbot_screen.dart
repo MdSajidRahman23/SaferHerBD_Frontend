@@ -438,13 +438,23 @@ class _MsgBubble extends StatelessWidget {
   }
 
   bool _shouldShowActionButtons(_Msg msg) {
-    final intent = msg.intent ?? '';
+    final intent = (msg.intent ?? '').toLowerCase();
+    final text = msg.text.toLowerCase();
     return msg.isCrisis ||
         intent.contains('safe_place') ||
         intent.contains('route') ||
         intent.contains('legal') ||
         intent.contains('harassment') ||
-        intent.contains('emergency');
+        intent.contains('emergency') ||
+        text.contains('999') ||
+        text.contains('109') ||
+        text.contains('sos') ||
+        text.contains('বিপদ') ||
+        text.contains('unsafe') ||
+        text.contains('safe place') ||
+        text.contains('নিরাপদ') ||
+        text.contains('legal') ||
+        text.contains('evidence');
   }
 }
 

@@ -290,18 +290,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text('Safety Breakdown',
+          Text('Risk Breakdown',
               style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 13.5)),
           const Spacer(),
-          Text('Live',
+          Text('Live risk',
               style: GoogleFonts.inter(color: AppColors.green, fontWeight: FontWeight.w700, fontSize: 10)),
         ]),
         const SizedBox(height: 12),
-        _Metric(label: 'Street safety', value: street),
+        _Metric(label: 'Street risk', value: street),
         const SizedBox(height: 8),
-        _Metric(label: 'Digital safety', value: digital),
+        _Metric(label: 'Digital risk', value: digital),
         const SizedBox(height: 8),
-        _Metric(label: 'Public spaces', value: pub),
+        _Metric(label: 'Public-space risk', value: pub),
       ]),
     );
   }
@@ -452,7 +452,7 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = value >= 75 ? AppColors.green : (value >= 50 ? AppColors.amber : AppColors.red);
+    final color = value >= 75 ? AppColors.red : (value >= 50 ? AppColors.amber : AppColors.green);
     return Row(children: [
       SizedBox(
         width: 110,

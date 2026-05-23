@@ -24,6 +24,10 @@ class SosResult {
   final int notifiedContactsCount;
   final int totalContacts;
   final String? sosId;
+  final String dispatchStatus;
+  final int fcmCount;
+  final int smsCount;
+  final double? serverAckLatencyMs;
 
   SosResult({
     required this.success,
@@ -34,6 +38,10 @@ class SosResult {
     this.notifiedContactsCount = 0,
     this.totalContacts = 0,
     this.sosId,
+    this.dispatchStatus = 'unknown',
+    this.fcmCount = 0,
+    this.smsCount = 0,
+    this.serverAckLatencyMs,
   });
 
   Map<String, dynamic> toMap() => {
@@ -46,6 +54,10 @@ class SosResult {
         'notified_contacts_count': notifiedContactsCount,
         'total_contacts': totalContacts,
         'sos_id': sosId,
+        'dispatch_status': dispatchStatus,
+        'fcm_count': fcmCount,
+        'sms_count': smsCount,
+        'server_ack_latency_ms': serverAckLatencyMs,
       };
 
   dynamic operator [](String key) => toMap()[key];
@@ -76,10 +88,10 @@ class SosService {
     final id = _uuid.v4();
     final m = triggerMethod ?? method ?? 'button';
 
-    double resolvedLat = lat ?? 23.8103;
-    double resolvedLng = lng ?? 90.4125;
+    double? resolvedLat = lat;
+    double? resolvedLng = lng;
 
-    if (lat == null || lng == null) {
+    if (resolvedLat == null || resolvedLng == null) {
       try {
         final pos = await _getPosition();
         if (pos != null) {
@@ -87,6 +99,16 @@ class SosService {
           resolvedLng = pos.longitude;
         }
       } catch (_) {}
+    }
+
+    if (resolvedLat == null || resolvedLng == null) {
+      return SosResult(
+        success: false,
+        wasOffline: false,
+        message: 'Location is required for SOS. Please enable GPS/location permission and try again.',
+        messageBn: 'SOS পাঠাতে সঠিক লোকেশন দরকার। GPS/location permission চালু করে আবার চেষ্টা করুন।',
+        sosId: id,
+      );
     }
 
     // Always try the server first. On web/Chrome, connectivity_plus can
@@ -177,18 +199,30 @@ class SosService {
 
         final notified = (data['notified_contacts_count'] as num?)?.toInt() ?? 0;
         final total    = (data['total_contacts'] as num?)?.toInt() ?? 0;
+        final fcmCount = (data['fcm_count'] as num?)?.toInt() ?? 0;
+        final smsCount = (data['sms_count'] as num?)?.toInt() ?? 0;
+        final dispatchStatus = (data['dispatch_status'] ?? data['status'] ?? 'received').toString();
+        final serverAckMs = (data['server_ack_latency_ms'] as num?)?.toDouble();
 
         return SosResult(
           success: true,
           wasOffline: false,
-          message: 'Alert sent. $notified of $total contacts notified.',
-          messageBn: notified > 0
-              ? 'সংকেত পাঠানো হয়েছে! $notified জনকে জানানো হয়েছে।'
-              : 'সংকেত পাঠানো হয়েছে! Emergency contact যোগ করুন।',
-          latencyMs: latencyMs,
+          message: dispatchStatus == 'queued'
+              ? 'Emergency signal received. Contact dispatch is queued.'
+              : 'Alert sent. $notified of $total contacts notified.',
+          messageBn: dispatchStatus == 'queued'
+              ? 'জরুরি সংকেত গ্রহণ করা হয়েছে। Contact notification queue হয়েছে।'
+              : (notified > 0
+                  ? 'সংকেত পাঠানো হয়েছে! $notified জনকে জানানো হয়েছে।'
+                  : 'সংকেত পাঠানো হয়েছে! Emergency contact যোগ করুন।'),
+          latencyMs: serverAckMs ?? latencyMs,
           notifiedContactsCount: notified,
           totalContacts: total,
           sosId: data['sos_id']?.toString() ?? id,
+          dispatchStatus: dispatchStatus,
+          fcmCount: fcmCount,
+          smsCount: smsCount,
+          serverAckLatencyMs: serverAckMs,
         );
       }
 
