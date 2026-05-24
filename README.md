@@ -1,4 +1,4 @@
-# SafeHer Bangladesh Frontend — Final Run Guide
+# SafeHer Bangladesh Frontend â€” Final Run Guide
 
 This repository contains the Flutter frontend for **SafeHer Bangladesh**, an AI-driven women safety and digital empowerment platform.
 
@@ -116,4 +116,14 @@ _safeher_tools/
 *.backup_*
 Firebase private config files
 ```
+## Admin Dashboard
 
+The dashboard includes an Admin quick action. It calls authenticated `/api/admin/*` endpoints.
+
+For local demo, enable admin access in the backend `.env`:
+
+```env
+ADMIN_PHONES=+8801XXXXXXXXX
+```
+
+Then run `php artisan config:clear` and log in with the matching account.

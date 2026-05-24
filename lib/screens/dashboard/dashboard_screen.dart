@@ -164,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Row(children: [
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('হ্যালো, ${_firstName.isEmpty ? "Sister" : _firstName}',
+          Text('Hello, ${_firstName.isEmpty ? "Sister" : _firstName}',
               style: GoogleFonts.hindSiliguri(
                   color: AppColors.ink, fontWeight: FontWeight.w800, fontSize: 19)),
           const SizedBox(height: 2),
@@ -262,14 +262,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildQuickActions() {
-    return Row(children: [
-      _Quick(icon: Icons.alt_route, label: 'Safe Route', onTap: () => widget.onNav('route')),
-      const SizedBox(width: 10),
-      _Quick(icon: Icons.chat_bubble_outline, label: 'Mitra', onTap: () => widget.onNav('mitra')),
-      const SizedBox(width: 10),
-      _Quick(icon: Icons.groups_2_outlined, label: 'Community', onTap: () => widget.onNav('community')),
-      const SizedBox(width: 10),
-      _Quick(icon: Icons.gavel, label: 'Legal Aid', onTap: () => widget.onNav('legal')),
+    return Column(children: [
+      Row(children: [
+        _Quick(icon: Icons.alt_route, label: 'Safe Route', onTap: () => widget.onNav('route')),
+        const SizedBox(width: 10),
+        _Quick(icon: Icons.chat_bubble_outline, label: 'Mitra', onTap: () => widget.onNav('mitra')),
+        const SizedBox(width: 10),
+        _Quick(icon: Icons.groups_2_outlined, label: 'Community', onTap: () => widget.onNav('community')),
+      ]),
+      const SizedBox(height: 10),
+      Row(children: [
+        _Quick(icon: Icons.gavel, label: 'Legal Aid', onTap: () => widget.onNav('legal')),
+        const SizedBox(width: 10),
+        _Quick(icon: Icons.admin_panel_settings_outlined, label: 'Admin', onTap: () => widget.onNav('admin')),
+        const SizedBox(width: 10),
+        _Quick(icon: Icons.settings_outlined, label: 'Settings', onTap: () => widget.onNav('settings')),
+      ]),
     ]);
   }
 
@@ -502,7 +510,7 @@ class _AlertRow extends StatelessWidget {
             Text(cat.toString(),
                 style: GoogleFonts.hindSiliguri(
                     color: AppColors.ink, fontWeight: FontWeight.w600, fontSize: 12.5)),
-            Text('$loc · ${_relTime(dateStr)}',
+            Text('$loc Ã‚Â· ${_relTime(dateStr)}',
                 style: GoogleFonts.hindSiliguri(color: AppColors.ink3, fontSize: 11)),
           ]),
         ),

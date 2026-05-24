@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../chatbot/chatbot_screen.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 import '../forum/forum_screen.dart';
 import '../legal/legal_screen.dart';
 import '../profile/profile_screen.dart';
 import '../route/route_screen.dart';
 import '../settings/settings_screen.dart';
 
-/// MainShell — host of the bottom-nav tabs after login.
+/// MainShell â€” host of the bottom-nav tabs after login.
 ///
 /// The dashboard's onNav callback receives string keys:
 ///   'home' | 'route' | 'mitra' | 'community' | 'legal' |
@@ -54,6 +55,9 @@ class _MainShellState extends State<MainShell> {
         break;
       case 'legal':
         body = LegalScreen(onNav: _onNav, onBack: _goHome);
+        break;
+      case 'admin':
+        body = AdminDashboardScreen(onNav: _onNav, onBack: _goHome);
         break;
       case 'settings':
         body = SettingsScreen(onNav: _onNav, onBack: _goHome);
