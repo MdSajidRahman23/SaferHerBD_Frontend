@@ -11,8 +11,9 @@ import '../route/route_screen.dart';
 import '../settings/settings_screen.dart';
 import '../safety_tools/safety_tools_screen.dart';
 import '../emergency_tools/emergency_tools_screen.dart';
+import '../learning_profile/learning_profile_screen.dart';
 
-/// MainShell ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â host of the bottom-nav tabs after login.
+/// MainShell ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â host of the bottom-nav tabs after login.
 ///
 /// The dashboard's onNav callback receives string keys:
 ///   'home' | 'route' | 'mitra' | 'community' | 'legal' |
@@ -67,6 +68,8 @@ class _MainShellState extends State<MainShell> {
         break;
       case 'safety-tools':
         body = SafetyToolsScreen(onNav: _onNav, onBack: _goHome);
+        break;      case 'learning-profile':
+        body = LearningProfileScreen(onNav: _onNav, onBack: _goHome);
         break;      case 'emergency-tools':
         body = EmergencyToolsScreen(onNav: _onNav, onBack: _goHome);
         break;      case 'settings':
