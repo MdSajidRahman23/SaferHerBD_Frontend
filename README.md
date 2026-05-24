@@ -1,4 +1,4 @@
-# SafeHer Bangladesh Frontend ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Final Run Guide
+# SafeHer Bangladesh Frontend ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Final Run Guide
 
 This repository contains the Flutter frontend for **SafeHer Bangladesh**, an AI-driven women safety and digital empowerment platform.
 
@@ -145,3 +145,6 @@ The Flutter app now includes an Evidence & Case Center screen for:
 - GD/FIR/legal-aid case tracking
 
 Open it from the dashboard card: **Evidence & Case Center**.
+## Sprint-8 Emergency Utility Toolkit
+
+The Flutter app now includes a Stealth & Emergency Tools screen for decoy calls, quick exit, witness reports, allies-nearby alerts, and helpline network access.
