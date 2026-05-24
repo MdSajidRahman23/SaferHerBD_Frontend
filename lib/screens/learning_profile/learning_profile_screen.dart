@@ -156,7 +156,7 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Trust Profile', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.ink)),
-              Text('Role: $role Â· Status: $status', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+              Text('Role: $role Ãƒâ€šÃ‚Â· Status: $status', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
             ]),
           ),
           Text('$score%', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.green)),
@@ -195,7 +195,7 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
         ]),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
-          value: _gender,
+          initialValue: _gender,
           decoration: _input('Gender/self-identification'),
           items: const [
             DropdownMenuItem(value: 'female', child: Text('Female / Woman')),
@@ -247,7 +247,7 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
           const SizedBox(height: 8),
           ...actions.take(3).map((a) => Padding(
                 padding: const EdgeInsets.only(bottom: 3),
-                child: Text('â€¢ ${a.toString()}', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink)),
+                child: Text('ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${a.toString()}', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink)),
               )),
         ],
         const SizedBox(height: 10),
