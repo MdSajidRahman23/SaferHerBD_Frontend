@@ -1,4 +1,4 @@
-# SafeHer Bangladesh Frontend â€” Final Run Guide
+# SafeHer Bangladesh Frontend Ã¢â‚¬â€ Final Run Guide
 
 This repository contains the Flutter frontend for **SafeHer Bangladesh**, an AI-driven women safety and digital empowerment platform.
 
@@ -127,3 +127,12 @@ ADMIN_PHONES=+8801XXXXXXXXX
 ```
 
 Then run `php artisan config:clear` and log in with the matching account.
+## Community Safety Hub
+
+The dashboard includes a Safety Hub entry for:
+
+- Women-only forum verification
+- Guardian/parental control setup
+- Sub-admin incident submission
+
+Backend must expose `/api/community/profile`, `/api/guardian-links`, and `/api/sub-admin/incidents`.

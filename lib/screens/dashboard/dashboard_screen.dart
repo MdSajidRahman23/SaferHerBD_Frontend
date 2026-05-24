@@ -276,6 +276,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(width: 10),
         _Quick(icon: Icons.admin_panel_settings_outlined, label: 'Admin', onTap: () => widget.onNav('admin')),
         const SizedBox(width: 10),
+        _Quick(icon: Icons.shield_outlined, label: 'Safety Hub', onTap: () => widget.onNav('communitySafety')),
+        const SizedBox(width: 10),
         _Quick(icon: Icons.settings_outlined, label: 'Settings', onTap: () => widget.onNav('settings')),
       ]),
     ]);
@@ -510,7 +512,7 @@ class _AlertRow extends StatelessWidget {
             Text(cat.toString(),
                 style: GoogleFonts.hindSiliguri(
                     color: AppColors.ink, fontWeight: FontWeight.w600, fontSize: 12.5)),
-            Text('$loc Ã‚Â· ${_relTime(dateStr)}',
+            Text('$loc Ãƒâ€šÃ‚Â· ${_relTime(dateStr)}',
                 style: GoogleFonts.hindSiliguri(color: AppColors.ink3, fontSize: 11)),
           ]),
         ),
