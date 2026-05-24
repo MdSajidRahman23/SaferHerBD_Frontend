@@ -1,4 +1,4 @@
-# SafeHer Bangladesh Frontend Ã¢â‚¬â€ Final Run Guide
+# SafeHer Bangladesh Frontend ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Final Run Guide
 
 This repository contains the Flutter frontend for **SafeHer Bangladesh**, an AI-driven women safety and digital empowerment platform.
 
@@ -136,3 +136,12 @@ The dashboard includes a Safety Hub entry for:
 - Sub-admin incident submission
 
 Backend must expose `/api/community/profile`, `/api/guardian-links`, and `/api/sub-admin/incidents`.
+## Sprint-7 Evidence & Case Center
+
+The Flutter app now includes an Evidence & Case Center screen for:
+
+- Guided incident reports
+- Private evidence-vault metadata
+- GD/FIR/legal-aid case tracking
+
+Open it from the dashboard card: **Evidence & Case Center**.

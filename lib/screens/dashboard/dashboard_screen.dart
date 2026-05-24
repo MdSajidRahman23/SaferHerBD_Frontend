@@ -146,6 +146,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _buildSosBigButton(),
               const SizedBox(height: 18),
               _buildQuickActions(),
+              const SizedBox(height: 12),
+              _buildEvidenceCaseBanner(),
               const SizedBox(height: 18),
               _buildSafetyMetrics(),
               const SizedBox(height: 18),
@@ -283,6 +285,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ]);
   }
 
+
+  Widget _buildEvidenceCaseBanner() {
+    return InkWell(
+      onTap: () => widget.onNav('safety-tools'),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: .10), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.folder_copy_outlined, color: AppColors.blue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Evidence & Case Center', style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: AppColors.ink)),
+              const SizedBox(height: 2),
+              Text('Incident report, private evidence vault, and GD/FIR tracker', style: GoogleFonts.inter(fontSize: 11, color: AppColors.ink2)),
+            ]),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.ink3),
+        ]),
+      ),
+    );
+  }
   Widget _buildSafetyMetrics() {
     if (_safetyLoading) return const _Skeleton(height: 120);
 
@@ -512,7 +546,7 @@ class _AlertRow extends StatelessWidget {
             Text(cat.toString(),
                 style: GoogleFonts.hindSiliguri(
                     color: AppColors.ink, fontWeight: FontWeight.w600, fontSize: 12.5)),
-            Text('$loc Ãƒâ€šÃ‚Â· ${_relTime(dateStr)}',
+            Text('$loc ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${_relTime(dateStr)}',
                 style: GoogleFonts.hindSiliguri(color: AppColors.ink3, fontSize: 11)),
           ]),
         ),

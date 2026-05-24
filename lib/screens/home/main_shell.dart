@@ -9,8 +9,9 @@ import '../legal/legal_screen.dart';
 import '../profile/profile_screen.dart';
 import '../route/route_screen.dart';
 import '../settings/settings_screen.dart';
+import '../safety_tools/safety_tools_screen.dart';
 
-/// MainShell Ã¢â‚¬â€ host of the bottom-nav tabs after login.
+/// MainShell ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â host of the bottom-nav tabs after login.
 ///
 /// The dashboard's onNav callback receives string keys:
 ///   'home' | 'route' | 'mitra' | 'community' | 'legal' |
@@ -63,7 +64,9 @@ class _MainShellState extends State<MainShell> {
       case 'admin':
         body = AdminDashboardScreen(onNav: _onNav, onBack: _goHome);
         break;
-      case 'settings':
+      case 'safety-tools':
+        body = SafetyToolsScreen(onNav: _onNav, onBack: _goHome);
+        break;      case 'settings':
         body = SettingsScreen(onNav: _onNav, onBack: _goHome);
         break;
       case 'profile':
