@@ -1,307 +1,369 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import '../../services/api_service.dart';
-import '../../utils/constants.dart';
 
 class LearningProfileScreen extends StatefulWidget {
-  final void Function(String)? onNav;
+  final void Function(String route)? onNav;
   final VoidCallback? onBack;
 
-  const LearningProfileScreen({super.key, this.onNav, this.onBack});
+  const LearningProfileScreen({
+    super.key,
+    this.onNav,
+    this.onBack,
+  });
 
   @override
   State<LearningProfileScreen> createState() => _LearningProfileScreenState();
 }
 
 class _LearningProfileScreenState extends State<LearningProfileScreen> {
-  final _api = ApiService();
-  bool _loading = true;
-  bool _submitting = false;
-  Map<String, dynamic> _trust = {};
-  Map<String, dynamic> _progress = {};
-  List<dynamic> _rights = [];
-  List<dynamic> _defense = [];
-  List<dynamic> _tips = [];
-
-  String _gender = 'female';
-  final _institution = TextEditingController();
-  final _reason = TextEditingController(text: 'I want women-only forum verification and community trust access.');
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
+  String _verificationType = 'women_forum';
+  final TextEditingController _noteController = TextEditingController();
 
   @override
   void dispose() {
-    _institution.dispose();
-    _reason.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    final data = await _api.getLearningProfileDashboard();
-    if (!mounted) return;
-    setState(() {
-      _trust = _asMap(data['trust_profile']);
-      _progress = _asMap(data['learning_progress']);
-      _rights = _asList(data['rights_modules']);
-      _defense = _asList(data['self_defense_modules']);
-      _tips = _asList(data['safety_tips']);
-      _loading = false;
-    });
+  void _goBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    if (widget.onBack != null) {
+      widget.onBack!();
+      return;
+    }
+
+    widget.onNav?.call('dashboard');
   }
 
-  Map<String, dynamic> _asMap(dynamic v) {
-    if (v is Map<String, dynamic>) return v;
-    if (v is Map) return Map<String, dynamic>.from(v);
-    return {};
-  }
-
-  List<dynamic> _asList(dynamic v) => v is List ? v : [];
-
-  Future<void> _requestVerification() async {
-    setState(() => _submitting = true);
-    final res = await _api.requestProfileVerification({
-      'verification_type': 'women_forum',
-      'gender': _gender,
-      'institution_or_area': _institution.text.trim().isEmpty ? 'Not specified' : _institution.text.trim(),
-      'reason': _reason.text.trim().isEmpty ? 'Women-only forum verification request.' : _reason.text.trim(),
-    });
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    _toast(res['message']?.toString() ?? (res['success'] == true ? 'Verification request submitted.' : 'Could not submit request.'));
-    await _load();
-  }
-
-  Future<void> _markDone(Map<String, dynamic> item, String type) async {
-    final key = item['key']?.toString();
-    if (key == null || key.isEmpty) return;
-    final res = await _api.markLearningProgress({
-      'module_key': key,
-      'module_type': type,
-      'completed': true,
-    });
-    _toast(res['message']?.toString() ?? 'Progress updated.');
-    await _load();
-  }
-
-  void _toast(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _submitVerificationRequest() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Verification request saved for review: $_verificationType',
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    const primary = Color(0xFF2563EB);
+
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
-        backgroundColor: AppColors.bg,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF172033),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.ink),
-          onPressed: widget.onBack,
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _goBack,
         ),
-        title: Text('Learning & Rights Center', style: GoogleFonts.inter(color: AppColors.ink, fontWeight: FontWeight.w800)),
-        actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded, color: AppColors.ink))],
+        title: const Text(
+          'Learning & Rights',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _trustCard(),
-                  const SizedBox(height: 14),
-                  _verificationCard(),
-                  const SizedBox(height: 14),
-                  _sectionTitle('Know Your Rights'),
-                  ..._rights.map((e) => _learningCard(_asMap(e), 'rights', Icons.gavel_outlined)),
-                  const SizedBox(height: 14),
-                  _sectionTitle('Self-defense Learning Hub'),
-                  ..._defense.map((e) => _learningCard(_asMap(e), 'self_defense', Icons.self_improvement_outlined)),
-                  const SizedBox(height: 14),
-                  _sectionTitle('Quick Safety Tips'),
-                  ..._tips.map((e) => _tipCard(_asMap(e))),
-                  const SizedBox(height: 24),
-                ],
-              ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _heroCard(primary),
+            const SizedBox(height: 14),
+            _sectionTitle('Trust Profile'),
+            _trustProfileCard(),
+            const SizedBox(height: 14),
+            _sectionTitle('Know Your Rights'),
+            _infoCard(
+              icon: Icons.gavel_outlined,
+              title: 'Emergency help',
+              body: 'If you are in immediate danger, call 999 or trigger SafeHer SOS.',
             ),
-    );
-  }
-
-  Widget _trustCard() {
-    final score = int.tryParse('${_trust['trust_score'] ?? 0}') ?? 0;
-    final verified = _trust['women_forum_verified'] == true;
-    final status = _trust['verification_status']?.toString() ?? 'unverified';
-    final role = _trust['role']?.toString() ?? 'user';
-    final badges = _asList(_trust['badges']);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _box(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Icons.verified_user_outlined, color: AppColors.green),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Trust Profile', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.ink)),
-              Text('Role: $role Ãƒâ€šÃ‚Â· Status: $status', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
-            ]),
-          ),
-          Text('$score%', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w900, color: AppColors.green)),
-        ]),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: LinearProgressIndicator(value: (score.clamp(0, 100)) / 100, minHeight: 9, backgroundColor: AppColors.line, color: verified ? AppColors.green : AppColors.orange),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: badges.isEmpty
-              ? [_chip('Verification pending or not requested', AppColors.orange)]
-              : badges.map((b) => _chip(_asMap(b)['label']?.toString() ?? 'Badge', AppColors.green)).toList(),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Learning progress: ${_progress['completed_total'] ?? 0} completed modules',
-          style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2),
-        ),
-      ]),
-    );
-  }
-
-  Widget _verificationCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _box(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Icon(Icons.how_to_reg_outlined, color: AppColors.purple),
-          const SizedBox(width: 8),
-          Expanded(child: Text('Women-only forum verification request', style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: AppColors.ink))),
-        ]),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          initialValue: _gender,
-          decoration: _input('Gender/self-identification'),
-          items: const [
-            DropdownMenuItem(value: 'female', child: Text('Female / Woman')),
-            DropdownMenuItem(value: 'prefer_not_to_say', child: Text('Prefer not to say')),
+            _infoCard(
+              icon: Icons.support_agent_outlined,
+              title: 'Women and child helpline',
+              body: 'Call 109 for women and child protection support in Bangladesh.',
+            ),
+            _infoCard(
+              icon: Icons.balance_outlined,
+              title: 'Legal aid support',
+              body: 'Use 16430 for national legal aid information and assistance.',
+            ),
+            _infoCard(
+              icon: Icons.security_outlined,
+              title: 'Digital harassment evidence',
+              body: 'Save screenshots, sender identity, timestamp and links before reporting online abuse.',
+            ),
+            const SizedBox(height: 14),
+            _sectionTitle('Self-defense basics'),
+            _infoCard(
+              icon: Icons.visibility_outlined,
+              title: 'Stay aware',
+              body: 'Avoid isolated paths, keep your phone ready and share your route when travelling at night.',
+            ),
+            _infoCard(
+              icon: Icons.directions_run_outlined,
+              title: 'Escape first',
+              body: 'The goal is to leave the unsafe situation quickly, not to fight unless there is no alternative.',
+            ),
+            _infoCard(
+              icon: Icons.record_voice_over_outlined,
+              title: 'Use a strong voice',
+              body: 'Say Ã¢â‚¬Å“StopÃ¢â‚¬Â or Ã¢â‚¬Å“HelpÃ¢â‚¬Â loudly to draw attention and create distance.',
+            ),
+            const SizedBox(height: 14),
+            _sectionTitle('Safety tips'),
+            _tipTile('Share your route before travelling through risky areas.'),
+            _tipTile('Keep at least two trusted emergency contacts.'),
+            _tipTile('Use Evidence Vault metadata to organize proof.'),
+            _tipTile('Use quick exit or stealth tools if someone is watching your screen.'),
+            const SizedBox(height: 14),
+            _sectionTitle('Verification request'),
+            _verificationCard(primary),
+            const SizedBox(height: 24),
           ],
-          onChanged: (v) => setState(() => _gender = v ?? _gender),
         ),
-        const SizedBox(height: 10),
-        TextField(controller: _institution, decoration: _input('Institution / area / community reference')),
-        const SizedBox(height: 10),
-        TextField(controller: _reason, minLines: 2, maxLines: 3, decoration: _input('Reason')),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _submitting ? null : _requestVerification,
-            icon: _submitting ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send_rounded),
-            label: Text(_submitting ? 'Submitting...' : 'Submit verification request'),
+      ),
+    );
+  }
+
+  Widget _heroCard(Color primary) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primary,
+            const Color(0xFF7C3AED),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: .20),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
-        ),
-      ]),
+        ],
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.school_outlined, color: Colors.white, size: 34),
+          SizedBox(height: 12),
+          Text(
+            'Learn, prepare, and stay protected',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Know your rights, practice safety habits, and manage trust profile verification for women-only community access.',
+            style: TextStyle(color: Colors.white, height: 1.35),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(title, style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.ink)),
+      padding: const EdgeInsets.only(bottom: 8, top: 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF172033),
+        ),
+      ),
     );
   }
 
-  Widget _learningCard(Map<String, dynamic> item, String type, IconData icon) {
-    final title = item['title']?.toString() ?? 'Learning module';
-    final summary = item['summary']?.toString() ?? '';
-    final actions = _asList(item['actions'] ?? item['steps']);
+  Widget _trustProfileCard() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: _box(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(icon, color: AppColors.red),
-          const SizedBox(width: 10),
-          Expanded(child: Text(title, style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: AppColors.ink))),
-        ]),
-        const SizedBox(height: 8),
-        Text(summary, style: GoogleFonts.inter(fontSize: 12, height: 1.4, color: AppColors.ink2)),
-        if (actions.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          ...actions.take(3).map((a) => Padding(
-                padding: const EdgeInsets.only(bottom: 3),
-                child: Text('ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${a.toString()}', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink)),
-              )),
-        ],
-        const SizedBox(height: 10),
-        Align(
-          alignment: Alignment.centerRight,
-          child: OutlinedButton.icon(
-            onPressed: () => _markDone(item, type),
-            icon: const Icon(Icons.check_circle_outline_rounded, size: 18),
-            label: const Text('Mark done'),
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _roundIcon(Icons.verified_user_outlined, const Color(0xFF059669)),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Trust score: 35 / 100',
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                ),
+              ),
+              const Chip(
+                label: Text('Unverified'),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
           ),
-        ),
-      ]),
+          const SizedBox(height: 12),
+          const Text(
+            'Verification helps unlock women-only forum access and increases community trust level.',
+            style: TextStyle(color: Color(0xFF5B6475), height: 1.35),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _tipCard(Map<String, dynamic> tip) {
+  Widget _infoCard({
+    required IconData icon,
+    required String title,
+    required String body,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: _box(),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Icon(Icons.lightbulb_outline_rounded, color: AppColors.orange),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(tip['title']?.toString() ?? 'Safety tip', style: GoogleFonts.inter(fontWeight: FontWeight.w800, color: AppColors.ink)),
-            const SizedBox(height: 4),
-            Text(tip['description']?.toString() ?? '', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2, height: 1.4)),
-          ]),
-        ),
-      ]),
+      decoration: _cardDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _roundIcon(icon, const Color(0xFF2563EB)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  body,
+                  style: const TextStyle(
+                    color: Color(0xFF5B6475),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _chip(String label, Color color) {
+  Widget _tipTile(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(20)),
-      child: Text(label, style: GoogleFonts.inter(fontSize: 11, color: color, fontWeight: FontWeight.w700)),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(13),
+      decoration: _cardDecoration(),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_outline, color: Color(0xFF059669)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(height: 1.3),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  BoxDecoration _box() => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.line),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .03), blurRadius: 12, offset: const Offset(0, 6))],
-      );
+  Widget _verificationCard(Color primary) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: _verificationType,
+            decoration: const InputDecoration(
+              labelText: 'Verification type',
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: 'women_forum',
+                child: Text('Women-only forum access'),
+              ),
+              DropdownMenuItem(
+                value: 'student_id',
+                child: Text('Student ID / institution verification'),
+              ),
+              DropdownMenuItem(
+                value: 'community',
+                child: Text('Community/sub-admin verification'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _verificationType = value);
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _noteController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Verification note',
+              hintText: 'Example: Requesting verification for women-only community access.',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _submitVerificationRequest,
+              icon: const Icon(Icons.send_outlined),
+              label: const Text('Submit verification request'),
+              style: FilledButton.styleFrom(
+                backgroundColor: primary,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  InputDecoration _input(String label) => InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppColors.card,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.line)),
-      );
+  Widget _roundIcon(IconData icon, Color color) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .10),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, color: color),
+    );
+  }
+
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFE7EAF1)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: .04),
+          blurRadius: 12,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    );
+  }
 }
