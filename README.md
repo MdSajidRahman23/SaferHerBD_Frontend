@@ -99,3 +99,7 @@ The Admin Dashboard includes an Advanced Admin Management entry for incident rev
 ## Advanced Safety Modules
 
 The Learning & Rights screen links to an Advanced Safety Modules screen covering Safe Ride, NID/trust verification, officer dispatch design, heatmap zone control, privacy center, audit log, helpline operator workflow, and shake/voice trigger settings.
+
+## Native Emergency Pack
+
+The Advanced Safety Modules screen links to a Native Emergency Pack covering Safe Walk timer, local alarm/vibration, offline SOS draft, shake-to-SOS settings, voice trigger settings, flashlight workflow, and missed check-in escalation without paid APIs.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../native_emergency/native_emergency_pack_screen.dart';
 
 class AdvancedPrototypeScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -51,6 +52,16 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
           children: [
             _hero(primary),
             const SizedBox(height: 14),
+            _actionCard(
+              icon: Icons.phone_android_outlined,
+              color: const Color(0xFFDC2626),
+              title: 'Native Emergency Pack',
+              subtitle: 'Safe Walk timer, local alarm, offline SOS draft, shake/voice settings, vibration and flashlight workflow without paid APIs.',
+              buttonText: 'Open native emergency pack',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NativeEmergencyPackScreen()),
+              ),
+            ),
             _section('Prototype features added for final scope coverage'),
             _actionCard(
               icon: Icons.directions_car_filled_outlined,
