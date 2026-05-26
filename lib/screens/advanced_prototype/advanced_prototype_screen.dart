@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../evidence_vault_plus/evidence_vault_plus_screen.dart';
 import '../native_emergency/native_emergency_pack_screen.dart';
 import '../guardian_tracking/guardian_tracking_screen.dart';
 
@@ -54,6 +55,16 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
           const _Sprint13GuardianTrackingCard(),
             _hero(primary),
             const SizedBox(height: 14),
+            _actionCard(
+              icon: Icons.lock_outline,
+              color: const Color(0xFF7C3AED),
+              title: 'Evidence Vault Plus',
+              subtitle: 'PIN lock, metadata, timestamp, checksum preview, export summary and native capture workflow without paid APIs.',
+              buttonText: 'Open evidence vault plus',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EvidenceVaultPlusScreen()),
+              ),
+            ),
             _actionCard(
               icon: Icons.phone_android_outlined,
               color: const Color(0xFFDC2626),
