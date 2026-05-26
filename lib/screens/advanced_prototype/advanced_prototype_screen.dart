@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../admin_intelligence/admin_intelligence_screen.dart';
 import '../evidence_vault_plus/evidence_vault_plus_screen.dart';
 import '../native_emergency/native_emergency_pack_screen.dart';
 import '../guardian_tracking/guardian_tracking_screen.dart';
@@ -55,6 +56,16 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
           const _Sprint13GuardianTrackingCard(),
             _hero(primary),
             const SizedBox(height: 14),
+            _actionCard(
+              icon: Icons.analytics_outlined,
+              color: const Color(0xFF111827),
+              title: 'Admin Intelligence',
+              subtitle: 'Risk-zone review, community trends, audit log preview and CSV export workflow without paid APIs.',
+              buttonText: 'Open admin intelligence',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AdminIntelligenceScreen()),
+              ),
+            ),
             _actionCard(
               icon: Icons.lock_outline,
               color: const Color(0xFF7C3AED),

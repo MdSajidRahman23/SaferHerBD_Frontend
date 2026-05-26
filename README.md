@@ -109,3 +109,7 @@ The Advanced Safety Modules screen links to a Native Emergency Pack covering Saf
 ## Evidence Vault Plus
 
 The Advanced Safety Modules screen links to Evidence Vault Plus, covering PIN lock, protected metadata, timestamp/location labels, checksum preview, export summary, and phone-native capture workflow without paid APIs.
+
+## Admin / Community Intelligence
+
+The Advanced Safety Modules screen links to Admin Intelligence, covering risk-zone review, community trends, audit log preview, and CSV export workflow without paid APIs.
