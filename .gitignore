@@ -71,3 +71,9 @@ safeher_sprint*_patch/
 repomix-output.xml
 *-output.xml
 *_output.xml
+
+# Local SafeHer patch/backup artifacts
+_safeher_backups/
+_safeher_reports/
+_safeher_tools/
+*.backup*
