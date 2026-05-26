@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../offline_safety/offline_safety_screen.dart';
 import '../admin_intelligence/admin_intelligence_screen.dart';
 import '../evidence_vault_plus/evidence_vault_plus_screen.dart';
 import '../native_emergency/native_emergency_pack_screen.dart';
@@ -56,6 +57,16 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
           const _Sprint13GuardianTrackingCard(),
             _hero(primary),
             const SizedBox(height: 14),
+            _actionCard(
+              icon: Icons.offline_bolt_outlined,
+              color: const Color(0xFF0F766E),
+              title: 'Offline Safety Kit',
+              subtitle: 'Emergency message templates, safety card, helpline checklist and manual phone-share workflow without paid APIs.',
+              buttonText: 'Open offline kit',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const OfflineSafetyScreen()),
+              ),
+            ),
             _actionCard(
               icon: Icons.analytics_outlined,
               color: const Color(0xFF111827),

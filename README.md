@@ -113,3 +113,7 @@ The Advanced Safety Modules screen links to Evidence Vault Plus, covering PIN lo
 ## Admin / Community Intelligence
 
 The Advanced Safety Modules screen links to Admin Intelligence, covering risk-zone review, community trends, audit log preview, and CSV export workflow without paid APIs.
+
+## Offline Safety Kit
+
+The Advanced Safety Modules screen links to Offline Safety Kit, covering emergency templates, safety card copy/export, helpline checklist, and manual sharing workflows without paid APIs.
