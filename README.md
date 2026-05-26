@@ -93,3 +93,6 @@ All tests passed
 - Firebase/FCM is optional for local demo.
 - Local backup folders and generated patch artifacts should not be committed.
 - Keep backend .env secrets private.
+## Advanced Admin Management
+
+The Admin Dashboard includes an Advanced Admin Management entry for incident review, women verification, role assignment, evidence review, and legal case review.

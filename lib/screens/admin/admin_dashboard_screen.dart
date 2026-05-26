@@ -87,11 +87,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     var s = value?.toString() ?? '';
     if (s.isEmpty) return s;
     s = s
-        .replaceAll('â€¢', ' - ')
-        .replaceAll('â€“', '-')
-        .replaceAll('â€”', '-')
-        .replaceAll('Â', '')
-        .replaceAll('�', '');
+        .replaceAll('Ã¢â‚¬Â¢', ' - ')
+        .replaceAll('Ã¢â‚¬â€œ', '-')
+        .replaceAll('Ã¢â‚¬â€', '-')
+        .replaceAll('Ã‚', '')
+        .replaceAll('ï¿½', '');
     try {
       final repaired = utf8.decode(latin1.encode(s), allowMalformed: true);
       final repairedBangla = RegExp(r'[\u0980-\u09FF]').allMatches(repaired).length;
@@ -191,7 +191,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 _Header(onBack: widget.onBack, onRefresh: _load),
-                const SizedBox(height: 16),
+              const SizedBox(height: 10),
+              _AdminManagementLauncher(onTap: () => widget.onNav('admin-management')),
+              const SizedBox(height: 14),
                 if (_loading)
                   const Padding(
                     padding: EdgeInsets.only(top: 120),
@@ -678,6 +680,42 @@ class _SquareButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.line)),
         child: Icon(icon, color: AppColors.ink, size: 18),
+      ),
+    );
+  }
+}
+
+class _AdminManagementLauncher extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AdminManagementLauncher({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Row(children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(color: AppColors.blue.withValues(alpha: .12), borderRadius: BorderRadius.circular(12)),
+            child: const Icon(Icons.manage_accounts_outlined, color: AppColors.blue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Advanced Admin Management', style: GoogleFonts.inter(fontWeight: FontWeight.w900, color: AppColors.ink)),
+            const SizedBox(height: 3),
+            Text('Incidents, verification, roles, evidence and case review', style: GoogleFonts.inter(fontSize: 12, color: AppColors.ink2)),
+          ])),
+          const Icon(Icons.chevron_right, color: AppColors.ink3),
+        ]),
       ),
     );
   }
