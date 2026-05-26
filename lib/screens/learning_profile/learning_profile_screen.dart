@@ -50,11 +50,14 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
   }
 
 
+
   void _openAdvancedSafetyModules() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AdvancedPrototypeScreen()),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {
