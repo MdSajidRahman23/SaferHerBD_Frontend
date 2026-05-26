@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../native_emergency/native_emergency_pack_screen.dart';
+import '../guardian_tracking/guardian_tracking_screen.dart';
 
 class AdvancedPrototypeScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -50,6 +51,7 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+          const _Sprint13GuardianTrackingCard(),
             _hero(primary),
             const SizedBox(height: 14),
             _actionCard(
@@ -159,6 +161,7 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _Sprint13GuardianTrackingCard(),
           Icon(Icons.auto_awesome_outlined, color: Colors.white, size: 34),
           SizedBox(height: 12),
           Text('Advanced prototype coverage', style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900)),
@@ -184,15 +187,18 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const _Sprint13GuardianTrackingCard(),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+          const _Sprint13GuardianTrackingCard(),
               _roundIcon(icon, color),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+          const _Sprint13GuardianTrackingCard(),
                     Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 5),
                     Text(subtitle, style: const TextStyle(color: Color(0xFF5B6475), height: 1.35)),
@@ -218,12 +224,14 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
       decoration: _cardDecoration(),
       child: Row(
         children: [
+          const _Sprint13GuardianTrackingCard(),
           const Icon(Icons.sensors_outlined, color: Color(0xFF7C3AED)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+          const _Sprint13GuardianTrackingCard(),
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
                 Text(subtitle, style: const TextStyle(color: Color(0xFF5B6475), height: 1.35)),
@@ -251,6 +259,46 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
       borderRadius: BorderRadius.circular(18),
       border: Border.all(color: const Color(0xFFE7EAF1)),
       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .04), blurRadius: 12, offset: const Offset(0, 6))],
+    );
+  }
+}
+class _Sprint13GuardianTrackingCard extends StatelessWidget {
+  const _Sprint13GuardianTrackingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GuardianTrackingScreen())),
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE7EAF1)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: .04), blurRadius: 12, offset: const Offset(0, 6))],
+        ),
+        child: const Row(
+          children: [
+          _Sprint13GuardianTrackingCard(),
+            Icon(Icons.share_location_outlined, color: Color(0xFF2563EB), size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+          _Sprint13GuardianTrackingCard(),
+                  Text('Guardian Live Tracking', style: TextStyle(fontWeight: FontWeight.w900)),
+                  SizedBox(height: 4),
+                  Text('Safe Walk timer, check-ins, last location and missed check-in escalation'),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
     );
   }
 }

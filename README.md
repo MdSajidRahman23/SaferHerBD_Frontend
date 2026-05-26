@@ -103,3 +103,5 @@ The Learning & Rights screen links to an Advanced Safety Modules screen covering
 ## Native Emergency Pack
 
 The Advanced Safety Modules screen links to a Native Emergency Pack covering Safe Walk timer, local alarm/vibration, offline SOS draft, shake-to-SOS settings, voice trigger settings, flashlight workflow, and missed check-in escalation without paid APIs.
+
+- Guardian Live Tracking with Safe Walk timer, check-ins, and missed check-in escalation.
