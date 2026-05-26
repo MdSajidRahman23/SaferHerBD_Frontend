@@ -113,7 +113,7 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
             _infoCard(
               icon: Icons.record_voice_over_outlined,
               title: 'Use a strong voice',
-              body: 'Say ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œStopÃƒÂ¢Ã¢â€šÂ¬Ã‚Â or ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œHelpÃƒÂ¢Ã¢â€šÂ¬Ã‚Â loudly to draw attention and create distance.',
+              body: 'Say Stop or Help loudly to draw attention and create distance.',
             ),
             const SizedBox(height: 14),
             _sectionTitle('Safety tips'),
