@@ -49,6 +49,13 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
     );
   }
 
+
+  void _openAdvancedSafetyModules() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AdvancedPrototypeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const primary = Color(0xFF2563EB);
@@ -74,6 +81,8 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             _heroCard(primary),
+            const SizedBox(height: 14),
+            _advancedModulesCard(primary),
             const SizedBox(height: 14),
             _sectionTitle('Trust Profile'),
             _trustProfileCard(),
@@ -186,6 +195,42 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
             style: TextStyle(color: Colors.white, height: 1.35),
           ),
         ],
+      ),
+    );
+  }
+
+
+  Widget _advancedModulesCard(Color primary) {
+    return InkWell(
+      onTap: _openAdvancedSafetyModules,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: .10),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: primary.withValues(alpha: .18)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.dashboard_customize_outlined, color: Color(0xFF2563EB), size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Advanced Safety Modules',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  SizedBox(height: 4),
+                  Text('Native tools, guardian tracking, evidence vault, offline kit and admin intelligence'),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right),
+          ],
+        ),
       ),
     );
   }
