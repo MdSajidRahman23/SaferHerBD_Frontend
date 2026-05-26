@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../advanced_prototype/advanced_prototype_screen.dart';
 
 class LearningProfileScreen extends StatefulWidget {
   final void Function(String route)? onNav;
@@ -124,7 +125,23 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
             const SizedBox(height: 14),
             _sectionTitle('Verification request'),
             _verificationCard(primary),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
+            _sectionTitle('Advanced prototype modules'),
+            _infoCard(
+              icon: Icons.auto_awesome_outlined,
+              title: 'Advanced Safety Modules',
+              body: 'Safe Ride, NID verification, officer dispatch, heatmap control, privacy center, audit log, and sensor triggers.',
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AdvancedPrototypeScreen()),
+                ),
+                icon: const Icon(Icons.open_in_new),
+                label: const Text('Open Advanced Safety Modules'),
+              ),
+            ),            const SizedBox(height: 24),
           ],
         ),
       ),

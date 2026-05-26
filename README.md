@@ -96,3 +96,6 @@ All tests passed
 ## Advanced Admin Management
 
 The Admin Dashboard includes an Advanced Admin Management entry for incident review, women verification, role assignment, evidence review, and legal case review.
+## Advanced Safety Modules
+
+The Learning & Rights screen links to an Advanced Safety Modules screen covering Safe Ride, NID/trust verification, officer dispatch design, heatmap zone control, privacy center, audit log, helpline operator workflow, and shake/voice trigger settings.
