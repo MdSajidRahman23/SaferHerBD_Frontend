@@ -1,3 +1,4 @@
+import 'screens/onboarding/onboarding_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,7 +25,7 @@ void main() async {
     statusBarIconBrightness: Brightness.dark,
   ));
 
-  // Initialize FCM in the background — never block app launch on this
+  // Initialize FCM in the background â€” never block app launch on this
   // (it gracefully no-ops if Firebase isn't configured)
   unawaited(NotificationService().initialize());
 
@@ -42,17 +43,17 @@ class SafeHerApp extends StatelessWidget {
       theme: AppTheme.light,
       initialRoute: '/welcome',
       routes: {
-        '/welcome':       (_) => const WelcomeScreen(),
-        '/':              (_) => const WelcomeScreen(),
-        '/login':         (_) => const LoginScreen(),
-        '/register':      (_) => const RegisterScreen(),
-        '/home':          (_) => const MainShell(),
-        '/sos':           (_) => const SosScreen(),
-        '/sos-history':   (_) => const SosHistoryScreen(),
-        '/profile':       (_) => const ProfileScreen(),
+        '/welcome': (_) => const WelcomeScreen(),
+        '/': (_) => const WelcomeScreen(),
+        '/onboarding': (_) => const OnboardingScreen(),
+        '/login': (_) => const LoginScreen(),
+        '/register': (_) => const RegisterScreen(),
+        '/home': (_) => const MainShell(),
+        '/sos': (_) => const SosScreen(),
+        '/sos-history': (_) => const SosHistoryScreen(),
+        '/profile': (_) => const ProfileScreen(),
         '/notifications': (_) => const NotificationsScreen(),
       },
     );
   }
 }
-
