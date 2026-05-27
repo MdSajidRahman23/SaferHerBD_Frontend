@@ -12,7 +12,7 @@ import 'screens/notifications/notifications_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/sos/sos_screen.dart';
 import 'screens/sos_history/sos_history_screen.dart';
-import 'screens/splash_screen.dart';
+import 'screens/welcome/welcome_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,9 +40,10 @@ class SafeHerApp extends StatelessWidget {
       title: 'SafeHer Bangladesh',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      initialRoute: '/',
+      initialRoute: '/welcome',
       routes: {
-        '/':              (_) => const SplashScreen(),
+        '/welcome':       (_) => const WelcomeScreen(),
+        '/':              (_) => const WelcomeScreen(),
         '/login':         (_) => const LoginScreen(),
         '/register':      (_) => const RegisterScreen(),
         '/home':          (_) => const MainShell(),
