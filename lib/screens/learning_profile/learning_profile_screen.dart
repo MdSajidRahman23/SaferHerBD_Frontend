@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../advanced_prototype/advanced_prototype_screen.dart';
 
 class LearningProfileScreen extends StatefulWidget {
@@ -30,26 +31,12 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
       Navigator.of(context).pop();
       return;
     }
-
     if (widget.onBack != null) {
       widget.onBack!();
       return;
     }
-
     widget.onNav?.call('dashboard');
   }
-
-  void _submitVerificationRequest() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Verification request saved for review: $_verificationType',
-        ),
-      ),
-    );
-  }
-
-
 
   void _openAdvancedSafetyModules() {
     Navigator.of(context).push(
@@ -57,7 +44,13 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
     );
   }
 
-
+  void _submitVerificationRequest() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Verification request saved for review: $_verificationType'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,23 +130,7 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
             const SizedBox(height: 14),
             _sectionTitle('Verification request'),
             _verificationCard(primary),
-            const SizedBox(height: 14),
-            _sectionTitle('Advanced prototype modules'),
-            _infoCard(
-              icon: Icons.auto_awesome_outlined,
-              title: 'Advanced Safety Modules',
-              body: 'Safe Ride, NID verification, officer dispatch, heatmap control, privacy center, audit log, and sensor triggers.',
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AdvancedPrototypeScreen()),
-                ),
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('Open Advanced Safety Modules'),
-              ),
-            ),            const SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -164,11 +141,8 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primary,
-            const Color(0xFF7C3AED),
-          ],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2563EB), Color(0xFF7C3AED)],
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -201,7 +175,6 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
       ),
     );
   }
-
 
   Widget _advancedModulesCard(Color primary) {
     return InkWell(
@@ -303,17 +276,11 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 5),
                 Text(
                   body,
-                  style: const TextStyle(
-                    color: Color(0xFF5B6475),
-                    height: 1.35,
-                  ),
+                  style: const TextStyle(color: Color(0xFF5B6475), height: 1.35),
                 ),
               ],
             ),
@@ -332,12 +299,7 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
         children: [
           const Icon(Icons.check_circle_outline, color: Color(0xFF059669)),
           const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(height: 1.3),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(height: 1.3))),
         ],
       ),
     );
@@ -357,18 +319,9 @@ class _LearningProfileScreenState extends State<LearningProfileScreen> {
               border: OutlineInputBorder(),
             ),
             items: const [
-              DropdownMenuItem(
-                value: 'women_forum',
-                child: Text('Women-only forum access'),
-              ),
-              DropdownMenuItem(
-                value: 'student_id',
-                child: Text('Student ID / institution verification'),
-              ),
-              DropdownMenuItem(
-                value: 'community',
-                child: Text('Community/sub-admin verification'),
-              ),
+              DropdownMenuItem(value: 'women_forum', child: Text('Women-only forum access')),
+              DropdownMenuItem(value: 'student_id', child: Text('Student ID / institution verification')),
+              DropdownMenuItem(value: 'community', child: Text('Community/sub-admin verification')),
             ],
             onChanged: (value) {
               if (value != null) {
