@@ -45,8 +45,61 @@ class _AdvancedPrototypeScreenState extends State<AdvancedPrototypeScreen> {
   }
 
   void _showConcept(String title) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$title demo workflow is ready for future native/production integration.')),
+    final details = <String, String>{
+      'Safe Ride': 'Demo workflow for verified ride booking, female-driver preference, route safety tracking and emergency contact sharing.',
+      'NID / Trust Verification': 'Concept workflow for identity/trust verification, women-only access review and admin approval readiness.',
+      'Privacy Center': 'Privacy workflow for consent, local-first data control, data review and future deletion/export requests.',
+      'Shake-to-SOS': 'Android sensor-based emergency trigger concept. Full background trigger requires native mobile permission handling.',
+      'Voice Trigger': 'Emergency wake-word concept for hands-free safety activation. Production mode needs careful privacy and battery handling.',
+      'Admin Audit Preview': 'Admin accountability concept for action history, moderation tracking, export and future tamper-resistant audit logs.',
+    };
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF172033),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  details[title] ?? 'This advanced safety workflow is available as a demo concept for future production integration.',
+                  style: const TextStyle(
+                    color: Color(0xFF5B6475),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Got it'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
